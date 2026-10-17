@@ -14,7 +14,7 @@
 - [x] 2.2 Начална сцена с камера, герой и цел като геометрични заместители.
 - [x] 2.3 README, правила и номериран backlog.
 - [x] 2.4 Проверка typecheck/build и запис на резултатите в VALIDATION.md.
-- [ ] 2.5 Push на branch и PR в GitHub. Готово: има действителен PR URL.
+- [x] 2.5 Push на branch и PR в GitHub: https://github.com/ivohtanev/Aram-Duel-Moba/pull/1.
 
 ## 3. Арена и движение
 - [ ] 3.1 Конфигурация на карта, координати и параметри на героя.

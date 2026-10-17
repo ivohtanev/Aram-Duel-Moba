@@ -24,6 +24,11 @@
 - Това са desktop viewport проверки, а не тестове на реални телефони.
   Touch, safe area на устройство, FPS и LAN все още не са проверени.
 - Движение и бой не са реализирани и не са предмет на този PR.
+- HTTP smoke проверка: `/` и `/src/main.ts` връщат 200.
+- Branch-ът е качен чрез локалния Git Credential Manager. PR към `main`:
+  https://github.com/ivohtanev/Aram-Duel-Moba/pull/1.
+  GitHub конекторът върна 403 при създаване; GitHub CLI с локалната
+  автентикация създаде PR успешно.
 
 Историческите резултати по-долу са от предишната cloud среда.
 
