@@ -3,17 +3,30 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#101a29" />
-    <title>Aram Duel — локален прототип</title>
+    <meta name="theme-color" content="#173f60" />
+    <title>Aram Duel — Скрежният мост</title>
   </head>
   <body>
-    <canvas id="game" aria-label="Тестова 3D арена"></canvas>
-    <aside class="status">
-      <h1>ARAM DUEL</h1>
-      <p>Локален прототип · Етап 1</p>
-      <p id="message">Зареждане на арената…</p>
+    <canvas id="game" aria-label="Скрежният мост — снежна ARAM карта. Влачи за оглед и използвай бутоните за приближаване."></canvas>
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">❖</span><div><strong>ARAM <span>DUEL</span></strong><small>ЛЕДЕНА АРЕНА</small></div></div>
+      <nav class="view-switch" aria-label="Изглед на картата">
+        <button id="view-overview" aria-pressed="true">Цялата карта</button>
+        <button id="view-arena" aria-pressed="false">Близък изглед</button>
+      </nav>
+      <div class="preview-tag"><i></i> ПРЕГЛЕД НА КАРТАТА</div>
+    </header>
+    <section class="map-caption" aria-label="Карта">
+      <div class="eyebrow"><span></span> 01 / ЗАМРЪЗНАЛАТА ПРОПАСТ</div>
+      <h1>Скрежният мост</h1>
+      <p id="message" role="status">Изграждане на картата…</p>
+      <div class="legend"><span><i class="blue-dot"></i>Синя база</span><span><i class="coral-dot"></i>Коралова база</span></div>
+    </section>
+    <aside class="camera-tools" aria-label="Управление на камерата">
+      <span class="drag-hint">Влачи за оглед</span>
+      <div class="zoom-control"><button id="zoom-out" aria-label="Отдалечи">−</button><output id="zoom-level" aria-label="Приближение">1.0×</output><button id="zoom-in" aria-label="Приближи">+</button></div>
     </aside>
-    <div class="orientation">За най-добър изглед завърти телефона хоризонтално.</div>
+    <div class="orientation">Завърти хоризонтално за по-добър изглед</div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
