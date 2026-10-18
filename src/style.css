@@ -1,4 +1,5 @@
 :root { font-family: 'Segoe UI', system-ui, sans-serif; color: #e9f8ff; background: #173f60; font-synthesis: none; }
+html { touch-action: none; overscroll-behavior: none; }
 * { box-sizing: border-box; }
 html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
 body::after { content: ''; position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 -100px 100px -70px #082b4b80; }
@@ -42,3 +43,22 @@ p { margin: 0; color: #aed2e3; font-size: 12px; }
 @media (max-width: 1000px) { .preview-tag { display: none; }.topbar { gap: 12px; }.drag-hint { display: none; } }
 @media (max-height: 500px) { .topbar { top: max(12px, env(safe-area-inset-top)); left: max(18px, env(safe-area-inset-left)); right: max(18px, env(safe-area-inset-right)); }.brand strong { font-size: 16px; }.brand-mark { font-size: 29px; }.brand small { font-size: 8px; }.view-switch button { padding: 8px 12px; }.map-caption { left: 20px; bottom: 16px; }.map-caption h1 { font-size: 24px; }.eyebrow,.map-caption p,.legend { display: none; }.camera-tools { bottom: 14px; right: 18px; } }
 @media (orientation: portrait) { .topbar { inset: max(20px, env(safe-area-inset-top)) 20px auto; flex-wrap: wrap; }.brand { width: 100%; }.view-switch { margin-top: 4px; }.map-caption { bottom: max(100px, env(safe-area-inset-bottom)); left: 22px; }.map-caption .eyebrow { font-size: 8px; }.camera-tools { right: 20px; bottom: 50px; }.orientation { display: block; position: absolute; bottom: max(16px, env(safe-area-inset-bottom)); width: 100%; text-align: center; font-size: 10px; color: #a3ccdf; }.legend { margin-top: 12px; } }
+/* Keep play controls separate from camera inspection and safe-area edges. */
+#joystick { position: absolute; left: max(22px, env(safe-area-inset-left)); bottom: max(22px, env(safe-area-inset-bottom)); width: 132px; height: 132px; border: 2px solid #a7e7f980; border-radius: 50%; background: #123b5e90; display: grid; place-items: center; touch-action: none; user-select: none; -webkit-user-select: none; }
+#joystick-knob { width: 48px; height: 48px; border-radius: 50%; background: #a4ebf5; box-shadow: 0 0 22px #6bddff50; pointer-events: none; }
+#joystick small { position: absolute; bottom: 12px; font-size: 8px; letter-spacing: .12em; pointer-events: none; }
+.action-controls { position: absolute; right: max(22px, env(safe-area-inset-right)); bottom: max(22px, env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(3, 56px); gap: 10px; }
+.action-controls button { height: 56px; border: 2px solid #a7e7f980; border-radius: 50%; background: #123b5edb; color: #d8faff; font-weight: 700; touch-action: none; user-select: none; -webkit-user-select: none; }
+.action-controls #action-attack { grid-column: 2 / 4; border-radius: 28px; }
+.action-controls button.active { background: #368b9a; border-color: #b1ffe0; }
+#cancel-cast { position: absolute; right: max(76px, env(safe-area-inset-right)); bottom: 174px; width: 88px; height: 52px; border: 2px dashed #ffb0a5; border-radius: 24px; background: #663744dc; color: #ffe1da; text-align: center; line-height: 48px; font-size: 12px; pointer-events: none; }
+#cancel-cast.active { background: #bb384d; }
+#cast-status { position: absolute; bottom: max(8px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); font-size: 10px; color: #cff7ff; text-align: center; pointer-events: none; }
+.map-caption { left: 50%; bottom: 42px; transform: translateX(-50%); text-align: center; width: 40%; }
+.map-caption h1 { font-size: 20px; }.map-caption .eyebrow,.map-caption .legend { display: none; }
+.camera-tools { right: max(22px, env(safe-area-inset-right)); top: 82px; bottom: auto; }
+#camera-drag-zone { top: 82px; right: 174px; width: 120px; height: 58px; gap: 0; border-radius: 12px; }
+#camera-drag-zone > span { font-size: 18px; } #camera-drag-zone strong { font-size: 10px; } #camera-drag-zone small { display: none; }
+@media (max-height: 500px) { .map-caption { bottom: 35px; }.map-caption h1 { font-size: 16px; } .camera-tools { top: 62px; } #camera-drag-zone { top: 62px; } }
+@media (orientation: portrait) { .camera-tools { top: 144px; } #camera-drag-zone { top: 144px; } .map-caption { bottom: 185px; width: 90%; } .map-caption p { display: none; } .orientation { bottom: 158px; } #cast-status { bottom: 4px; width: 90%; } }
+@media (max-width: 400px) { #joystick { width: 112px; height: 112px; left: max(14px, env(safe-area-inset-left)); } .action-controls { grid-template-columns: repeat(3, 48px); gap: 8px; right: max(14px, env(safe-area-inset-right)); } .action-controls button { height: 48px; } }

@@ -14,7 +14,7 @@
         <button id="view-overview" aria-pressed="false">Широк изглед</button>
         <button id="view-arena" aria-pressed="true">Близък изглед</button>
       </nav>
-      <div class="preview-tag"><i></i> 3.4 · КАМЕРА</div>
+      <div class="preview-tag"><i></i> 4 · МОБИЛНИ КОНТРОЛИ</div>
     </header>
     <section class="map-caption" aria-label="Карта">
       <div class="eyebrow"><span></span> 01 / ЗАМРЪЗНАЛАТА ПРОПАСТ</div>
@@ -29,6 +29,15 @@
       <div class="zoom-control"><button id="zoom-out" aria-label="Отдалечи">−</button><output id="zoom-level" aria-label="Приближение">2.0×</output><button id="zoom-in" aria-label="Приближи">+</button></div>
     </aside>
     <div class="orientation">Завърти хоризонтално за по-добър изглед</div>
+    <div id="joystick" aria-label="Джойстик за движение"><span id="joystick-knob"></span><small>ДВИЖЕНИЕ</small></div>
+    <div class="action-controls" aria-label="Умения: задръж, насочи и отпусни">
+      <button id="action-q" aria-label="Q: прав снаряд">Q</button>
+      <button id="action-e" aria-label="E: област">E</button>
+      <button id="action-r" aria-label="R: dash">R</button>
+      <button id="action-attack" aria-label="Основна атака">АТАКА</button>
+    </div>
+    <div id="cancel-cast" hidden>ОТКАЗ</div>
+    <output id="cast-status" aria-live="polite">Контроли · без щети засега</output>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
