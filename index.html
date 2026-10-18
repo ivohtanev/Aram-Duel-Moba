@@ -7,14 +7,10 @@
     <title>Aram Duel — Скрежният мост</title>
   </head>
   <body>
-    <canvas id="game" aria-label="Скрежният мост — снежна ARAM карта. WASD или стрелки за движение. Камерата следи героя. Използвай зоната за оглед и бутоните за приближаване."></canvas>
+    <canvas id="game" aria-label="Скрежният мост. WASD/стрелки за движение; Space/Q/E/R: задръж за обсег, отпусни за каст. Камера 4×, зона за оглед вдясно."></canvas>
     <header class="topbar">
       <div class="brand"><span class="brand-mark" aria-hidden="true">❖</span><div><strong>ARAM <span>DUEL</span></strong><small>ЛЕДЕНА АРЕНА</small></div></div>
-      <nav class="view-switch" aria-label="Изглед на картата">
-        <button id="view-overview" aria-pressed="false">Широк изглед</button>
-        <button id="view-arena" aria-pressed="true">Близък изглед</button>
-      </nav>
-      <div class="preview-tag"><i></i> 5 · ОСНОВНА АТАКА</div>
+      <div class="preview-tag"><i></i> ТРЕНИРОВЪЧЕН ПОЛИГОН</div>
     </header>
     <section class="map-caption" aria-label="Карта">
       <div class="eyebrow"><span></span> 01 / ЗАМРЪЗНАЛАТА ПРОПАСТ</div>
@@ -25,9 +21,6 @@
     <div id="camera-drag-zone" aria-label="Зона за оглед на картата. Задръж и влачи; отпусни за връщане към героя.">
       <span aria-hidden="true">✥</span><strong>Оглед на картата</strong><small>Задръж и влачи · Отпусни за героя</small>
     </div>
-    <aside class="camera-tools" aria-label="Управление на камерата">
-      <div class="zoom-control"><button id="zoom-out" aria-label="Отдалечи">−</button><output id="zoom-level" aria-label="Приближение">2.0×</output><button id="zoom-in" aria-label="Приближи">+</button></div>
-    </aside>
     <div class="orientation">Завърти хоризонтално за по-добър изглед</div>
     <div id="joystick" aria-label="Джойстик за движение"><span id="joystick-knob"></span><small>ДВИЖЕНИЕ</small></div>
     <div class="action-controls" aria-label="Умения: задръж, насочи и отпусни">

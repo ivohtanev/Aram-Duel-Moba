@@ -65,3 +65,13 @@ p { margin: 0; color: #aed2e3; font-size: 12px; }
 @media (max-height: 500px) { .map-caption { bottom: 35px; }.map-caption h1 { font-size: 16px; } .camera-tools { top: 62px; } #camera-drag-zone { top: 62px; } }
 @media (orientation: portrait) { .camera-tools { top: 144px; } #camera-drag-zone { top: 144px; } .map-caption { bottom: 185px; width: 90%; } .map-caption p { display: none; } .orientation { bottom: 158px; } #cast-status { bottom: 4px; width: 90%; } }
 @media (max-width: 400px) { #joystick { width: 112px; height: 112px; left: max(14px, env(safe-area-inset-left)); } .action-controls { grid-template-columns: repeat(3, 48px); gap: 8px; right: max(14px, env(safe-area-inset-right)); } .action-controls button { height: 48px; } }
+/* Right-hand map inspection, above and separate from combat controls. */
+#camera-drag-zone { right: max(18px, env(safe-area-inset-right)); top: 28%; width: clamp(180px, 25vw, 320px); height: clamp(100px, 29vh, 230px); gap: 8px; border-radius: 20px; }
+#camera-drag-zone > span { font-size: 27px; }
+#camera-drag-zone strong { font-size: 12px; }
+#camera-drag-zone small { display: block; font-size: 9px; }
+#cancel-cast { left: 50%; right: auto; transform: translateX(-50%); }
+#health-status { max-width: calc(100% - 44px); }
+.action-controls button[aria-disabled='true'] { color: #b3c9d4; border-color: #a7e7f940; }
+@media (orientation: portrait) { #camera-drag-zone { width: 42vw; padding: 8px; text-align: center; } #health-status { top: 90px; } }
+@media (max-height: 500px) { #camera-drag-zone { top: 25%; height: 90px; min-height: 0; } #camera-drag-zone small { display: none; } }

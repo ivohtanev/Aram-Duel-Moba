@@ -21,7 +21,7 @@ class Surface extends EventTarget {
     this.dispatchEvent(event); return event;
   }
 }
-function fixture(t) {
+function fixture(t, lockedZoom = null) {
   const engine = new NullEngine();
   const scene = new Scene(engine);
   const camera = new FreeCamera('test', new Vector3(46, 58, -30), scene);
@@ -30,7 +30,7 @@ function fixture(t) {
   const canvas = new Surface(), zone = new Surface(), host = new Surface(), page = new Surface();
   const hero = { ...HERO.spawn };
   let zoom;
-  const controls = setupMapCamera(scene, canvas, zone, () => hero, value => zoom = value, host, page);
+  const controls = setupMapCamera(scene, canvas, zone, () => hero, value => zoom = value, host, page, lockedZoom);
   const target = () => camera.position.subtract(new Vector3(46, 58, -30));
   const centered = () => { near(target().x, hero.x); near(target().y, HERO.height / 2); near(target().z, hero.z); };
   const down = () => zone.emit('pointerdown', { pointerId: 1, button: 0, clientX: 700, clientY: 170 });
@@ -93,10 +93,19 @@ test('inspection can reach distant target and both bases, but remains bounded; z
   f.zone.emit('pointerup', { pointerId: 1 });
   Object.assign(f.hero, { x: 0, z: -30 }); f.controls.update(); f.down();
   f.move(-10000, 10000); assert.ok(f.target().z > TARGET.spawn.z);
-  f.controls.zoomBy(1000); near(f.zoom(), 3);
+  f.controls.zoomBy(1000); near(f.zoom(), 4);
   f.controls.zoomBy(0.0001); near(f.zoom(), 1);
   f.controls.dispose(); f.centered();
   f.down(); f.move(); f.centered(); assert.equal(f.zone.captured.size, 0);
 });
 
 
+
+test('production camera stays locked at 4x through wheel, view, API calls and resize', t => {
+  const f = fixture(t, 4);
+  near(f.zoom(), 4); const top = f.camera.orthoTop;
+  f.canvas.emit('wheel', { deltaY: 500, preventDefault() {} });
+  f.zone.emit('wheel', { deltaY: -500, preventDefault() {} });
+  f.controls.zoomBy(0.1); f.controls.view('overview'); f.controls.resize();
+  near(f.zoom(), 4); near(f.camera.orthoTop, top); f.centered();
+});
