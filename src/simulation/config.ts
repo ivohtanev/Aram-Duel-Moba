@@ -28,6 +28,7 @@ export const HERO = {
   r: { distance: 3, duration: 0.2, cooldown: 6 },
 } as const;
 export const TARGET = { spawn: { x: 1.4, z: 4 }, health: 2000, respawnDelay: 2 } as const;
+export const OBSTACLE = { x: 2, z: 0, radius: 1.1, height: 1.4 } as const;
 
 /** Walkable footprint only; decorative walls, towers and brush have no collisions yet. */
 export function isOnMap(x: number, z: number, inset = 0): boolean {
