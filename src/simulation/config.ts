@@ -22,7 +22,7 @@ export const MAP = {
 
 export const HERO = {
   spawn: { x: -1.4, z: -4 }, radius: 0.42, height: 1.55, health: 1000, speed: 5,
-  attack: { damage: 60, range: 5, interval: 0.8 },
+  attack: { damage: 60, range: 5, interval: 0.8, projectileSpeed: 12 },
   q: { damage: 120, range: 9, speed: 12, cooldown: 4 },
   e: { damage: 100, radius: 1.5, range: 6, delay: 0.5, cooldown: 7 },
   r: { distance: 3, duration: 0.2, cooldown: 6 },

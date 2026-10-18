@@ -8,13 +8,18 @@ export function direction(keys: ReadonlySet<string>) {
   return { x: (30 * right - 46 * up) / length, z: (46 * right + 30 * up) / length };
 }
 
-export function setupKeyboard(onSuspend: () => void, host: Window = window, page: Document = document) {
+export function setupKeyboard(onSuspend: () => void, host: Window = window, page: Document = document, onAttack?: () => void) {
   const keys = new Set<string>();
   const clear = () => { keys.clear(); onSuspend(); };
   const down = (event: KeyboardEvent) => {
     if (event.altKey || event.ctrlKey || event.metaKey) { clear(); return; }
     const target = event.target as HTMLElement | null;
     if (target?.closest?.('input, textarea, select, [contenteditable]:not([contenteditable="false"])')) return;
+    if (event.code === 'Space' && onAttack) {
+      event.preventDefault();
+      if (!event.repeat) onAttack();
+      return;
+    }
     if (!movementCodes.has(event.code)) return;
     event.preventDefault();
     keys.add(event.code);
