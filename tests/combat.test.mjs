@@ -25,10 +25,10 @@ test('attack requires range, starts interval only on success, hits once after tr
   const c = createCombat();
   assert.equal(c.attack(HERO.spawn), 'no-target'); assert.equal(c.cooldown(), 0);
   assert.equal(c.attack(origin), 'fired'); assert.equal(c.dummy.health, TARGET.health);
-  assert.equal(c.attack(origin), 'cooldown'); assert.equal(c.projectiles().length, 1);
-  tick(c, 24); assert.equal(c.dummy.health, TARGET.health);
+  assert.equal(c.attack(origin), 'cooldown'); assert.equal(c.projectiles().length, 0);
+  tick(c, 36); assert.equal(c.dummy.health, TARGET.health);
   tick(c, 1); assert.equal(c.dummy.health, TARGET.health - 60); assert.equal(c.projectiles().length, 0);
-  tick(c, 22); assert.equal(c.attack(origin), 'cooldown');
+  tick(c, 10); assert.equal(c.attack(origin), 'cooldown');
   tick(c, 1); assert.equal(c.attack(origin), 'fired');
   tick(c, 100); assert.equal(c.dummy.health, TARGET.health - 120);
 });
@@ -36,9 +36,10 @@ test('attack requires range, starts interval only on success, hits once after tr
 test('homing follows a moved target outside starting range; death invalidates in-flight projectiles', () => {
   const c = createCombat(); c.attack(origin);
   c.dummy.position = { x: 4, z: 9 };
-  tick(c, 60); assert.equal(c.dummy.health, TARGET.health - 60);
+  tick(c, 75); assert.equal(c.dummy.health, TARGET.health - 60);
   c.dummy.position = { ...TARGET.spawn };
-  c.attack(origin); c.damage(c.hero, c.dummy, TARGET.health);
+  c.attack(origin); tick(c, 12); assert.equal(c.projectiles().length, 1);
+  c.damage(c.hero, c.dummy, TARGET.health);
   tick(c, 1); assert.equal(c.projectiles().length, 0);
   tick(c, 119); assert.equal(c.dummy.health, TARGET.health);
   tick(c, 60); assert.equal(c.dummy.health, TARGET.health);
@@ -66,17 +67,17 @@ test('combat shares fixed movement ticks at 30/60/144 FPS and clamps long frames
   assert.equal(JSON.stringify(c.projectiles()), before);
 });
 
-test('Space fires once per press, ignores repeats/editable shortcuts, and disposes', () => {
+test('Space previews on keydown, casts on keyup, ignores repeats/editable shortcuts, and disposes', () => {
   const host = new EventTarget(), page = new EventTarget(); let attacks = 0;
   const input = setupKeyboard(() => {}, host, page, () => attacks++);
-  const down = (props = {}) => {
-    const e = new Event('keydown', { cancelable: true });
+  const down = (props = {}, type = 'keydown') => {
+    const e = new Event(type, { cancelable: true });
     for (const [key, value] of Object.entries({ code: 'Space', ...props })) Object.defineProperty(e, key, { value });
     host.dispatchEvent(e); return e;
   };
-  assert.equal(down().defaultPrevented, true); down({ repeat: true });
+  assert.equal(down().defaultPrevented, true); down({ repeat: true }); assert.equal(input.held(), 'attack'); assert.equal(attacks, 0); down({}, 'keyup'); assert.equal(input.held(), undefined);
   down({ ctrlKey: true }); down({ target: { closest: () => ({}) } }); assert.equal(attacks, 1);
-  down(); assert.equal(attacks, 2); input.dispose(); down(); assert.equal(attacks, 2);
+  down(); down({}, 'keyup'); assert.equal(attacks, 2); input.dispose(); down(); down({}, 'keyup'); assert.equal(attacks, 2);
 });
 
 test('projectile meshes update, disappear on impact, and release resources on dispose', () => {
