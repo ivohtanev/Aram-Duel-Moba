@@ -2,8 +2,13 @@
 * { box-sizing: border-box; }
 html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
 body::after { content: ''; position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 -100px 100px -70px #082b4b80; }
-#game { display: block; width: 100%; height: 100%; touch-action: none; outline: none; cursor: grab; }
-#game.dragging { cursor: grabbing; }
+#game { display: block; width: 100%; height: 100%; touch-action: none; outline: none; }
+#camera-drag-zone { position: absolute; right: max(18px, env(safe-area-inset-right)); top: 28%; width: clamp(180px, 25vw, 320px); height: clamp(100px, 29vh, 230px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border: 1px dashed #a3d7ed70; border-radius: 20px; background: #123b5e50; color: #d9f3fa; touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab; }
+#camera-drag-zone > span { font-size: 27px; }
+#camera-drag-zone strong { font-size: 12px; }
+#camera-drag-zone small { font-size: 9px; }
+#camera-drag-zone.dragging { cursor: grabbing; background: #123b5eb0; border-color: #b2f5ff; }
+@media (orientation: portrait) { #camera-drag-zone { width: 42vw; padding: 8px; text-align: center; } }
 button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 button:focus-visible { outline: 2px solid #b2f5ff; outline-offset: 4px; }
 .topbar { position: absolute; inset: max(24px, env(safe-area-inset-top)) max(30px, env(safe-area-inset-right)) auto max(30px, env(safe-area-inset-left)); display: flex; align-items: center; justify-content: space-between; gap: 20px; pointer-events: none; }
