@@ -1,7 +1,33 @@
+# Dependencies and package-manager caches
 node_modules/
+.npm/
+
+# Generated builds and tool caches
 dist/
+.vite/
+.cache/
+*.tsbuildinfo
+
+# Test and coverage output
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+
+# Local environment and machine-specific settings
 .env
 .env.*
 !.env.example
 *.local
+
+# Editor temporary files
+.idea/
+*.swp
+*.swo
+*~
+
+# Operating-system metadata
 .DS_Store
+Thumbs.db
+Desktop.ini
