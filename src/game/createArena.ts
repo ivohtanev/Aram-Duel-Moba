@@ -7,7 +7,7 @@ import { Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { Color3, Color4 } from '@babylonjs/core/Maths/math.color';
 import { HemisphericLight } from '@babylonjs/core/Lights/hemisphericLight';
 import { DirectionalLight } from '@babylonjs/core/Lights/directionalLight';
-import { MAP, HERO, TARGET } from '../simulation/config';
+import { MAP, HERO, TARGET, OBSTACLE } from '../simulation/config';
 import { mapGeometry } from './mapGeometry';
 
 /** Buildings are visual landmarks; combat and collision are separate milestones. */
@@ -171,6 +171,13 @@ export function createArena(engine: Engine) {
       }
     }
   }
+  // One solid landmark; its circular footprint is shared with simulation.
+  const rock = OBSTACLE;
+  g.cylinder(m.rockLight, rock.x, rock.height / 2 + 0.08, rock.z,
+    rock.radius * 2, rock.radius * 1.55, rock.height, 16);
+  g.cylinder(m.ice, rock.x, rock.height + 0.08, rock.z,
+    rock.radius * 1.55, rock.radius * 1.25, 0.18, 16);
+  g.ring(m.snow, rock.x, 0.12, rock.z, rock.radius * 2 - 0.04, 0.08);
   // Toy-like preview characters. Their placements come from the shared config.
   // A separate geometry batch keeps the moving hero out of the static map.
   const actor = mapGeometry(scene);

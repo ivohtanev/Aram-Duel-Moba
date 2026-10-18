@@ -7,12 +7,12 @@ import { direction, setupKeyboard } from '../src/input/keyboard.ts';
 const near = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-9, `${actual} != ${expected}`);
 const distance = p => Math.hypot(p.x - HERO.spawn.x, p.z - HERO.spawn.z);
 
-test('two seconds cover 10 units for straight and diagonal input at 30/60/144 FPS', () => {
+test('one second covers 5 units for straight and diagonal input at 30/60/144 FPS', () => {
   for (const fps of [30, 60, 144]) {
-    for (const codes of [['KeyD'], ['KeyW', 'KeyD']]) {
+    for (const codes of [['KeyS'], ['KeyS', 'KeyA']]) {
       const sim = createMovement();
-      for (let i = 0; i < fps * 2; i++) sim.advance(1 / fps, direction(new Set(codes)));
-      near(distance(sim.position()), 10);
+      for (let i = 0; i < fps; i++) sim.advance(1 / fps, direction(new Set(codes)));
+      near(distance(sim.position()), 5);
     }
   }
 });
