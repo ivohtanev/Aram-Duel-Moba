@@ -53,14 +53,17 @@ export function mapGeometry(scene: Scene) {
     data.applyToMesh(mesh);
     return place(mesh, mat, x, y, z);
   };
-  const finish = () => {
+  const finish = (freeze = true) => {
+    const result: Mesh[] = [];
     for (const [mat, meshes] of batches) {
       if (!meshes.length) { mat.dispose(); continue; }
       const merged = Mesh.MergeMeshes(meshes, true, true, undefined, false, false)!;
       merged.name = `map-${mat.name}`;
       merged.isPickable = false;
-      merged.freezeWorldMatrix();
+      if (freeze) merged.freezeWorldMatrix();
+      result.push(merged);
     }
+    return result;
   };
   return { material, box, cylinder, ring, finish };
 }
