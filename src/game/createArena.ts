@@ -1,3 +1,4 @@
+import { TransformNode } from '@babylonjs/core/Meshes/transformNode';
 import type { Engine } from '@babylonjs/core/Engines/engine';
 import { Scene } from '@babylonjs/core/scene';
 import { FreeCamera } from '@babylonjs/core/Cameras/freeCamera';
@@ -10,7 +11,7 @@ import { MAP, HERO, TARGET } from '../simulation/config';
 import { mapGeometry } from './mapGeometry';
 
 /** Buildings are visual landmarks; combat and collision are separate milestones. */
-export function createArena(engine: Engine): Scene {
+export function createArena(engine: Engine) {
   const scene = new Scene(engine);
   scene.clearColor = Color4.FromHexString('#173f60ff');
   const camera = new FreeCamera('camera', new Vector3(46, 58, -30), scene);
@@ -171,13 +172,22 @@ export function createArena(engine: Engine): Scene {
     }
   }
   // Toy-like preview characters. Their placements come from the shared config.
-  const hero = HERO.spawn;
-  shadow(hero.x, hero.z, 1.55);
-  g.ring(m.blue, hero.x, 0.13, hero.z, 1.4, 0.09);
-  g.cylinder(m.blueDark, hero.x, 0.63, hero.z, HERO.radius * 1.8, HERO.radius * 1.5, 0.9, 8);
-  g.cylinder(m.blue, hero.x, HERO.height - 0.33, hero.z, 0.8, 0.65, 0.6, 8);
-  g.box(m.gold, hero.x, 1.35, hero.z + 0.35, 0.48, 0.16, 0.08);
-  g.box(m.snow, hero.x + 0.55, 0.8, hero.z + 0.1, 0.16, 1.2, 0.25, -0.25);
+  // A separate geometry batch keeps the moving hero out of the static map.
+  const actor = mapGeometry(scene);
+  const blue = actor.material('hero-blue', '#35cbe7', 0.3);
+  const dark = actor.material('hero-dark', '#177aa6');
+  const gold = actor.material('hero-gold', '#e7c887');
+  const snow = actor.material('hero-snow', '#d6f3f7');
+  actor.ring(blue, 0, 0.13, 0, 1.4, 0.09);
+  actor.cylinder(dark, 0, 0.63, 0, HERO.radius * 1.8, HERO.radius * 1.5, 0.9, 8);
+  actor.cylinder(blue, 0, HERO.height - 0.33, 0, 0.8, 0.65, 0.6, 8);
+  actor.box(gold, 0, 1.35, 0.35, 0.48, 0.16, 0.08);
+  actor.box(snow, 0.55, 0.8, 0.1, 0.16, 1.2, 0.25, -0.25);
+  const shade = actor.material('hero-shadow', '#3b637f');
+  actor.cylinder(shade, 0.25, 0.09, -0.2, 1.55, 1.55, 0.025, 12);
+  const hero = new TransformNode('hero', scene);
+  for (const mesh of actor.finish(false)) mesh.parent = hero;
+  hero.position.set(HERO.spawn.x, 0, HERO.spawn.z);
   const dummy = TARGET.spawn;
   shadow(dummy.x, dummy.z, 1.5);
   g.ring(m.coral, dummy.x, 0.13, dummy.z, 1.4, 0.09);
@@ -190,5 +200,5 @@ export function createArena(engine: Engine): Scene {
     vertices: scene.meshes.reduce((total, mesh) => total + mesh.getTotalVertices(), 0),
     triangles: scene.meshes.reduce((total, mesh) => total + mesh.getTotalIndices() / 3, 0),
   };
-  return scene;
+  return { scene, hero };
 }
