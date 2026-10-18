@@ -19,7 +19,8 @@ try {
   const movement = createMovement();
   let lastTime: number | undefined;
   const keyboard = setupKeyboard(() => { movement.suspend(); lastTime = undefined; });
-  const controls = setupMapCamera(scene, canvas, zoom => {
+  const dragZone = document.querySelector<HTMLElement>('#camera-drag-zone')!;
+  const controls = setupMapCamera(scene, canvas, dragZone, () => hero.position, zoom => {
     zoomLabel.value = `${zoom.toFixed(1)}×`;
     overviewButton.setAttribute('aria-pressed', String(zoom === 1));
     arenaButton.setAttribute('aria-pressed', String(zoom > 1));
@@ -43,10 +44,11 @@ try {
     }
     const position = movement.interpolated();
     hero.position.set(position.x, 0, position.z);
+    controls.update();
     if (!document.hidden) scene.render();
   });
   void scene.whenReadyAsync().then(() => {
-    if (!scene.isDisposed) message.textContent = 'WASD / стрелки за движение · Влачи за оглед';
+    if (!scene.isDisposed) message.textContent = 'WASD / стрелки за движение · Камерата следи героя';
   });
   if (import.meta.env.DEV) console.info('Map geometry:', scene.metadata);
   cleanup = () => {
