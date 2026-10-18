@@ -196,16 +196,22 @@ export function createArena(engine: Engine) {
   for (const mesh of actor.finish(false)) mesh.parent = hero;
   hero.position.set(HERO.spawn.x, 0, HERO.spawn.z);
   const dummy = TARGET.spawn;
-  shadow(dummy.x, dummy.z, 1.5);
-  g.ring(m.coral, dummy.x, 0.13, dummy.z, 1.4, 0.09);
-  g.cylinder(m.coralDark, dummy.x, 0.65, dummy.z, 0.35, 0.35, 1.1, 6);
-  g.cylinder(m.coral, dummy.x, 1.15, dummy.z, 0.9, 0.75, 0.9, 8);
-  g.box(m.gold, dummy.x, 1.1, dummy.z - 0.4, 0.32, 0.32, 0.08, Math.PI / 4);
+  const targetGeometry = mapGeometry(scene);
+  const coral = targetGeometry.material('dummy-coral', '#ff9994');
+  const coralDark = targetGeometry.material('dummy-dark', '#a24e67');
+  const targetGold = targetGeometry.material('dummy-gold', '#e7c887');
+  targetGeometry.ring(coral, 0, 0.13, 0, 1.4, 0.09);
+  targetGeometry.cylinder(coralDark, 0, 0.65, 0, 0.35, 0.35, 1.1, 6);
+  targetGeometry.cylinder(coral, 0, 1.15, 0, 0.9, 0.75, 0.9, 8);
+  targetGeometry.box(targetGold, 0, 1.1, -0.4, 0.32, 0.32, 0.08, Math.PI / 4);
+  const target = new TransformNode('dummy', scene);
+  for (const mesh of targetGeometry.finish(false)) mesh.parent = target;
+  target.position.set(dummy.x, 0, dummy.z);
   g.finish();
   scene.metadata = {
     map: MAP.name, staticMeshes: scene.meshes.length,
     vertices: scene.meshes.reduce((total, mesh) => total + mesh.getTotalVertices(), 0),
     triangles: scene.meshes.reduce((total, mesh) => total + mesh.getTotalIndices() / 3, 0),
   };
-  return { scene, hero };
+  return { scene, hero, target };
 }

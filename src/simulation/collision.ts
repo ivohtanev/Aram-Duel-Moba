@@ -20,11 +20,11 @@ function circle(p: Point, d: Point, center: Point, radius: number): Interval | u
     normal: hit => unit({ x: hit.x - center.x, z: hit.z - center.z }) };
 }
 
-function bridge(p: Point, d: Point): Interval | undefined {
+function bridge(p: Point, d: Point, radius: number): Interval | undefined {
   let enter = -Infinity, exit = Infinity;
   let normal: Point = { x: 0, z: 0 };
   for (const axis of ['x', 'z'] as const) {
-    const half = (axis === 'x' ? MAP.bridge.width : MAP.bridge.length) / 2 - HERO.radius;
+    const half = (axis === 'x' ? MAP.bridge.width : MAP.bridge.length) / 2 - radius;
     if (Math.abs(d[axis]) < EPS) { if (Math.abs(p[axis]) > half) return; continue; }
     const a = (-half - p[axis]) / d[axis], b = (half - p[axis]) / d[axis];
     enter = Math.max(enter, Math.min(a, b));
@@ -37,8 +37,8 @@ function bridge(p: Point, d: Point): Interval | undefined {
 }
 
 /** Conservative union of inset bridge and inset bases, matching isOnMap. */
-function boundaryHit(p: Point, d: Point) {
-  const intervals = [bridge(p, d), ...MAP.bases.map(base => circle(p, d, base, MAP.baseRadius - HERO.radius))]
+function boundaryHit(p: Point, d: Point, radius: number = HERO.radius) {
+  const intervals = [bridge(p, d, radius), ...MAP.bases.map(base => circle(p, d, base, MAP.baseRadius - radius))]
     .filter((value): value is Interval => value !== undefined)
     .sort((a, b) => a.enter - b.enter);
   let end = 0;
@@ -56,6 +56,19 @@ function boundaryHit(p: Point, d: Point) {
 export function canStand(p: Point): boolean {
   return isOnMap(p.x, p.z, HERO.radius)
     && Math.hypot(p.x - OBSTACLE.x, p.z - OBSTACLE.z) >= OBSTACLE.radius + HERO.radius - EPS;
+}
+
+/** Fraction of a straight segment before the first wall/rock, without sliding. */
+export function straightFraction(p: Point, d: Point, radius: number): number {
+  if (!Number.isFinite(d.x) || !Number.isFinite(d.z) || !isOnMap(p.x, p.z, radius)) return 0;
+  if (dot(d, d) < EPS * EPS) return 1;
+  if (Math.hypot(p.x - OBSTACLE.x, p.z - OBSTACLE.z) < OBSTACLE.radius + radius - EPS) return 0;
+  let t = boundaryHit(p, d, radius)?.t ?? 1;
+  const rock = circle(p, d, OBSTACLE, OBSTACLE.radius + radius);
+  if (rock && rock.enter >= -EPS && rock.enter <= 1 && rock.exit > EPS) {
+    t = Math.min(t, Math.max(0, Math.min(1 - 1e-12, rock.enter)));
+  }
+  return Math.max(0, Math.min(1, t));
 }
 
 /** Swept circle: earliest contact, then remove the component into the surface.

@@ -18,13 +18,15 @@ export function createMovement() {
   let previous = { ...current };
   let remainder = 0;
   return {
-    advance(seconds: number, input: Point) {
+    advance(seconds: number, input: Point, onStep?: (position: Point) => void,
+      move: (position: Point, input: Point) => Point = step) {
       if (!Number.isFinite(seconds) || seconds < 0) return;
       remainder += Math.min(seconds, MAX_FRAME);
       // Tolerance avoids losing a tick at exact frame boundaries due to rounding.
       while (remainder + 1e-12 >= STEP) {
         previous = current;
-        current = step(current, input);
+        current = move(current, input);
+        onStep?.({ ...current });
         remainder = Math.max(0, remainder - STEP);
       }
     },
