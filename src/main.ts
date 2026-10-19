@@ -24,7 +24,7 @@ let mode: 'test' | 'game' | null = null;
 let engine: Engine | undefined;
 let cleanup: (() => void) | undefined;
 try {
-  engine = new Engine(canvas, true, { stencil: false });
+  engine = new Engine(canvas, true, { stencil: false, doNotHandleContextLost: false });
   engine.setHardwareScalingLevel(1 / Math.min(window.devicePixelRatio || 1, 1.5));
   const { scene, hero, target } = createArena(engine);
   const movement = createMovement(), combat = createCombat();
@@ -77,6 +77,7 @@ try {
     facing = { x: -46 / Math.hypot(30, 46), z: 30 / Math.hypot(30, 46) };
     const position = movement.position();
     hero.position.set(position.x, 0, position.z); target.setEnabled(true);
+    hero.rotation.y = Math.atan2(facing.x, facing.z);
     target.position.set(combat.dummy.position.x, 0, combat.dummy.position.z);
     controls.reset(); marker.update(position); combatView.update([], []);
     debugView.update(mode === 'test' && debugToggle.checked, position, combat.dummy.position, [], []);
@@ -124,6 +125,8 @@ try {
       lastTime = now;
     }
     const position = movement.interpolated();
+    const dx = position.x - hero.position.x, dz = position.z - hero.position.z;
+    if (Math.hypot(dx, dz) > 1e-8) hero.rotation.y = Math.atan2(dx, dz);
     hero.position.set(position.x, 0, position.z);
     target.setEnabled(combat.dummy.health > 0);
     combatView.update(combat.projectiles(), combat.areas());
@@ -148,13 +151,23 @@ try {
     marker.update(position, touch.aiming() ?? (held ? aimFor(held) : undefined));
     if (mode !== null && !document.hidden) scene.render();
   };
-  const visibility = setupVisibility(engine, render, suspend);
+  const interrupt = () => { keyboard.reset(); touch.reset(); controls.reset(); suspend(); };
+  const visibility = setupVisibility(engine, render, interrupt, document, resize);
+  const lostObserver = engine.onContextLostObservable.add(() => visibility.setContextLost(true));
+  const restoredObserver = engine.onContextRestoredObservable.add(() => {
+    // Babylon has rebuilt GPU resources before this notification. Frozen materials
+    // must rebind their effects, and the resumed canvas needs a fresh viewport.
+    scene.markAllMaterialsAsDirty(63);
+    visibility.setContextLost(false);
+  });
   void scene.whenReadyAsync().then(() => {
     if (!scene.isDisposed) message.textContent = 'WASD / джойстик · Задръж за обсег · Отпусни за каст · Space / Q / E / R';
   });
   cleanup = () => {
     window.removeEventListener('resize', resize); canvas.removeEventListener('pointermove', pointerMove);
     visibility.dispose();
+    engine?.onContextLostObservable.remove(lostObserver);
+    engine?.onContextRestoredObservable.remove(restoredObserver);
     resetButton.removeEventListener('click', reset); cooldownToggle.removeEventListener('change', setCooldowns);
     startTestButton.removeEventListener('click', startTest); startGameButton.removeEventListener('click', startGame);
     menuButton.removeEventListener('click', showMenu);

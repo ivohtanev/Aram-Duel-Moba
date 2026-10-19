@@ -22,10 +22,10 @@ function fixture(t) {
   const start = () => { joy.emit('pointerdown'); joy.emit('pointermove', { clientX: 90 }); buttons.q.emit('pointerdown', { pointerId: 2 }); };
   return { joy, knob, cancel, host, page, buttons, casts, input, start, suspends: () => suspends };
 }
-test('dead zone, analog ramp and clamped diagonal speed in screen basis', () => {
-  assert.deepEqual(stick(2, 2, 32), { x: 0, z: 0 });
-  const half = stick(16, 0, 32); assert.ok(Math.hypot(half.x, half.z) > 0 && Math.hypot(half.x, half.z) < 1);
-  for (const [x,y] of [[100,0],[0,100],[100,100]]) assert.ok(Math.abs(Math.hypot(...Object.values(stick(x,y,32))) - 1) < 1e-9);
+test('every nonzero stick displacement uses full speed in screen basis', () => {
+  assert.deepEqual(stick(0, 0, 32), { x: 0, z: 0 });
+  const half = stick(16, 0, 32); assert.ok(Math.abs(Math.hypot(half.x, half.z) - 1) < 1e-9);
+  for (const [x,y] of [[0.01,0],[0,0.01],[0.01,0.01],[100,0],[0,100],[100,100]]) assert.ok(Math.abs(Math.hypot(...Object.values(stick(x,y,32))) - 1) < 1e-9);
   assert.ok(stick(0,-32,32).x < 0 && stick(0,-32,32).z > 0);
 });
 test('quick cast selects in-range target or last movement direction', () => {
