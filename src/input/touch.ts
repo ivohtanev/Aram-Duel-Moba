@@ -6,11 +6,11 @@ export type Aim = { action: Action; direction: Point; distance: number; canceled
 export const range = (action: Action) => action === 'r' ? HERO.r.distance : HERO[action].range;
 
 /** Screen-relative input, using the same fixed camera basis as the keyboard. */
-export function stick(dx: number, dy: number, radius: number, deadZone = 0.18): Point {
+export function stick(dx: number, dy: number, radius: number, deadZone = 0): Point {
   const length = Math.hypot(dx, dy);
   if (length <= radius * deadZone) return { x: 0, z: 0 };
-  const strength = Math.min(1, (length / radius - deadZone) / (1 - deadZone));
-  const scale = strength / (length * Math.hypot(30, 46));
+  if (!Number.isFinite(length)) return { x: 0, z: 0 };
+  const scale = 1 / (length * Math.hypot(30, 46));
   return { x: (30 * dx + 46 * dy) * scale, z: (46 * dx - 30 * dy) * scale };
 }
 

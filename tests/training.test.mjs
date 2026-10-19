@@ -184,3 +184,23 @@ test('rejected or unavailable orientation lock leaves fullscreen exit usable', a
     assert.equal(f.page.fullscreenElement, null); ui.dispose();
   }
 });
+
+test('context recovery and page lifecycle resume only when both page and GPU are ready', () => {
+  const page = new Surface(), host = new Surface();
+  let running = false, resumes = 0, suspends = 0;
+  const loop = { runRenderLoop: () => { running = true; }, stopRenderLoop: () => { running = false; } };
+  const ui = setupVisibility(loop, () => {}, () => suspends++, page, () => resumes++, host);
+  ui.setContextLost(true); assert.equal(running, false);
+  host.dispatchEvent(new Event('pageshow')); assert.equal(running, false);
+  page.hidden = true; ui.setContextLost(false); assert.equal(running, false);
+  page.hidden = false; page.dispatchEvent(new Event('visibilitychange')); assert.equal(running, true);
+  host.dispatchEvent(new Event('pagehide')); assert.equal(running, false);
+  page.dispatchEvent(new Event('visibilitychange')); assert.equal(running, false);
+  host.dispatchEvent(new Event('pageshow')); assert.equal(running, true);
+  page.dispatchEvent(new Event('freeze')); assert.equal(running, false);
+  page.dispatchEvent(new Event('resume')); assert.equal(running, true);
+  assert.ok(resumes >= 4 && suspends >= resumes);
+  ui.dispose(); const count = resumes;
+  host.dispatchEvent(new Event('pageshow')); page.dispatchEvent(new Event('resume'));
+  assert.equal(running, false); assert.equal(resumes, count);
+});

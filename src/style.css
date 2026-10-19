@@ -107,3 +107,7 @@ p { margin: 0; color: #aed2e3; font-size: 12px; }
 @media (max-height: 500px) { #debug-status { top: 96px; font-size: 10px; } }
 @media (orientation: portrait) { .topbar { flex-wrap: nowrap; gap: 8px; } .brand { width: auto; } .brand strong { font-size: 14px; } .brand small, .brand-mark { display: none; } .training-tools button, .training-tools summary { padding: 10px 8px; font-size: 11px; } #debug-status { top: 128px; } }
 @media (orientation: portrait) and (max-width: 440px) { .topbar { flex-wrap: wrap; } .brand { width: 100%; } .training-tools { margin-left: auto; } #health-status { top: 112px; } #debug-status { top: 150px; } }
+
+/* The gesture surface stays hit-testable but never obscures the arena. */
+#camera-drag-zone, #camera-drag-zone.dragging { background: transparent; border: 0; }
+#camera-drag-zone > span { opacity: .5; }
