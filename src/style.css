@@ -1,4 +1,18 @@
 :root { font-family: 'Segoe UI', system-ui, sans-serif; color: #e9f8ff; background: #173f60; font-synthesis: none; }
+[hidden] { display: none !important; }
+#play-screen { width: 100%; height: 100%; }
+#start-screen { position: absolute; inset: 0; display: grid; place-items: center; overflow: auto; padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left)); background: radial-gradient(ellipse at 50% 20%, #357e9b 0%, #173f60 50%, #0a243e 100%); }
+.start-card { width: min(100%, 440px); text-align: center; }
+.start-mark { color: #a4edf8; font-size: 64px; text-shadow: 0 0 40px #7feaff60; }
+.start-eyebrow { margin-top: 16px; font-size: 11px; letter-spacing: .25em; color: #9ed7e8; }
+#start-title { margin: 12px 0; font-size: clamp(34px, 8vw, 56px); letter-spacing: .08em; }
+#start-title span { font-weight: 400; color: #a5dceb; }
+.start-description { font-size: 14px; }
+.start-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 32px; }
+.start-actions button { min-height: 56px; padding: 14px; border: 1px solid #a3d7ed80; border-radius: 12px; color: #d8faff; background: #123b5edb; font-size: 16px; font-weight: 650; }
+.start-actions #start-game { background: #b4eef5; color: #123b5e; border-color: #d8faff; }
+.start-actions button:hover { filter: brightness(1.12); }
+@media (max-height: 420px) { .start-mark { font-size: 36px; } .start-eyebrow { margin-top: 6px; } #start-title { margin: 6px 0; font-size: 34px; } .start-actions { margin-top: 20px; } }
 html { touch-action: none; overscroll-behavior: none; }
 * { box-sizing: border-box; }
 html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
@@ -44,6 +58,9 @@ p { margin: 0; color: #aed2e3; font-size: 12px; }
 @media (max-height: 500px) { .topbar { top: max(12px, env(safe-area-inset-top)); left: max(18px, env(safe-area-inset-left)); right: max(18px, env(safe-area-inset-right)); }.brand strong { font-size: 16px; }.brand-mark { font-size: 29px; }.brand small { font-size: 8px; }.view-switch button { padding: 8px 12px; }.map-caption { left: 20px; bottom: 16px; }.map-caption h1 { font-size: 24px; }.eyebrow,.map-caption p,.legend { display: none; }.camera-tools { bottom: 14px; right: 18px; } }
 @media (orientation: portrait) { .topbar { inset: max(20px, env(safe-area-inset-top)) 20px auto; flex-wrap: wrap; }.brand { width: 100%; }.view-switch { margin-top: 4px; }.map-caption { bottom: max(100px, env(safe-area-inset-bottom)); left: 22px; }.map-caption .eyebrow { font-size: 8px; }.camera-tools { right: 20px; bottom: 50px; }.orientation { display: block; position: absolute; bottom: max(16px, env(safe-area-inset-bottom)); width: 100%; text-align: center; font-size: 10px; color: #a3ccdf; }.legend { margin-top: 12px; } }
 /* Keep play controls separate from camera inspection and safe-area edges. */
+#health-status { position: absolute; top: 82px; left: max(22px, env(safe-area-inset-left)); max-width: calc(100% - 340px); padding: 8px 10px; border-radius: 10px; background: #123b5ee6; color: #d8faff; font-size: 11px; font-variant-numeric: tabular-nums; pointer-events: none; }
+@media (max-height: 500px) { #health-status { top: 62px; font-size: 10px; } }
+@media (orientation: portrait) { #health-status { top: 216px; max-width: calc(100% - 44px); } }
 #joystick { position: absolute; left: max(22px, env(safe-area-inset-left)); bottom: max(22px, env(safe-area-inset-bottom)); width: 132px; height: 132px; border: 2px solid #a7e7f980; border-radius: 50%; background: #123b5e90; display: grid; place-items: center; touch-action: none; user-select: none; -webkit-user-select: none; }
 #joystick-knob { width: 48px; height: 48px; border-radius: 50%; background: #a4ebf5; box-shadow: 0 0 22px #6bddff50; pointer-events: none; }
 #joystick small { position: absolute; bottom: 12px; font-size: 8px; letter-spacing: .12em; pointer-events: none; }
@@ -62,3 +79,27 @@ p { margin: 0; color: #aed2e3; font-size: 12px; }
 @media (max-height: 500px) { .map-caption { bottom: 35px; }.map-caption h1 { font-size: 16px; } .camera-tools { top: 62px; } #camera-drag-zone { top: 62px; } }
 @media (orientation: portrait) { .camera-tools { top: 144px; } #camera-drag-zone { top: 144px; } .map-caption { bottom: 185px; width: 90%; } .map-caption p { display: none; } .orientation { bottom: 158px; } #cast-status { bottom: 4px; width: 90%; } }
 @media (max-width: 400px) { #joystick { width: 112px; height: 112px; left: max(14px, env(safe-area-inset-left)); } .action-controls { grid-template-columns: repeat(3, 48px); gap: 8px; right: max(14px, env(safe-area-inset-right)); } .action-controls button { height: 48px; } }
+/* Right-hand map inspection, above and separate from combat controls. */
+#camera-drag-zone { right: max(18px, env(safe-area-inset-right)); top: 28%; width: clamp(180px, 25vw, 320px); height: clamp(100px, 29vh, 230px); gap: 8px; border-radius: 20px; }
+#camera-drag-zone > span { font-size: 27px; }
+#camera-drag-zone strong { font-size: 12px; }
+#camera-drag-zone small { display: block; font-size: 9px; }
+#cancel-cast { left: 50%; right: auto; transform: translateX(-50%); }
+#health-status { max-width: calc(100% - 44px); }
+.action-controls button[aria-disabled='true'] { color: #b3c9d4; border-color: #a7e7f940; }
+@media (orientation: portrait) { #camera-drag-zone { width: 42vw; padding: 8px; text-align: center; } #health-status { top: 90px; } }
+@media (max-height: 500px) { #camera-drag-zone { top: 25%; height: 90px; min-height: 0; } #camera-drag-zone small { display: none; } }
+/* Compact training controls stay above the map without covering the thumb zones. */
+.training-tools { display: flex; align-items: start; gap: 8px; pointer-events: auto; }
+.training-tools button, .training-tools summary { border: 1px solid #a3d7ed70; border-radius: 10px; background: #123b5ef5; color: #d8faff; padding: 10px 12px; font-size: 12px; min-height: 44px; cursor: pointer; }
+.training-tools button:disabled { opacity: .6; cursor: wait; }
+#training-panel { position: relative; }
+#training-panel summary:focus-visible { outline: 2px solid #b2f5ff; outline-offset: 4px; }
+.training-settings { position: absolute; top: calc(100% + 8px); right: 0; width: 200px; padding: 10px; display: grid; gap: 6px; background: #123b5ef5; border: 1px solid #a3d7ed70; border-radius: 12px; }
+.training-settings label { display: flex; align-items: center; gap: 8px; min-height: 40px; font-size: 12px; cursor: pointer; }
+.training-settings input { width: 18px; height: 18px; accent-color: #92e6f3; }
+.topbar { z-index: 2; }
+#debug-status { position: absolute; top: 120px; left: max(22px, env(safe-area-inset-left)); padding: 8px 10px; background: #123b5ef0; border-radius: 10px; white-space: pre-line; font-size: 11px; font-variant-numeric: tabular-nums; pointer-events: none; }
+@media (max-height: 500px) { #debug-status { top: 96px; font-size: 10px; } }
+@media (orientation: portrait) { .topbar { flex-wrap: nowrap; gap: 8px; } .brand { width: auto; } .brand strong { font-size: 14px; } .brand small, .brand-mark { display: none; } .training-tools button, .training-tools summary { padding: 10px 8px; font-size: 11px; } #debug-status { top: 128px; } }
+@media (orientation: portrait) and (max-width: 440px) { .topbar { flex-wrap: wrap; } .brand { width: 100%; } .training-tools { margin-left: auto; } #health-status { top: 112px; } #debug-status { top: 150px; } }

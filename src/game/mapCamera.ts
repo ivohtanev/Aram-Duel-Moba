@@ -12,6 +12,7 @@ export function setupMapCamera(
   onZoom: (zoom: number) => void,
   host: Window = window,
   page: Document = document,
+  lockedZoom: number | null = 4,
 ) {
   const camera = scene.activeCamera as FreeCamera;
   const offset = new Vector3(46, 58, -30);
@@ -21,7 +22,7 @@ export function setupMapCamera(
   const groundScale = offset.length() / offset.y;
   const mapHalfWidth = Math.max(MAP.bridge.width / 2, MAP.baseRadius);
   const mapHalfLength = Math.max(...MAP.bases.map(base => Math.abs(base.z))) + MAP.baseRadius;
-  let zoom = 2;
+  let zoom = lockedZoom ?? 4;
   let drag: { id: number; x: number; y: number } | undefined;
   const update = () => {
     if (!drag) {
@@ -39,7 +40,7 @@ export function setupMapCamera(
     update();
   };
   const setZoom = (value: number) => {
-    zoom = Math.max(1, Math.min(3, value));
+    zoom = lockedZoom ?? Math.max(1, Math.min(4, value));
     resizeProjection(); onZoom(zoom);
   };
   const end = () => {
@@ -79,7 +80,7 @@ export function setupMapCamera(
   page.addEventListener('visibilitychange', end);
   setZoom(zoom);
   return {
-    update, resize,
+    update, resize, reset: end,
     view(mode: 'overview' | 'arena') { end(); setZoom(mode === 'overview' ? 1 : 2); },
     zoomBy: (factor: number) => setZoom(zoom * factor),
     dispose() {
