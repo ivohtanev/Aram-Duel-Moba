@@ -2,13 +2,20 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { moveWithCollisions, canStand } from '../src/simulation/collision.ts';
 import { createMovement } from '../src/simulation/movement.ts';
-import { HERO, OBSTACLE, MAP } from '../src/simulation/config.ts';
+import { HERO, SOLID_OBJECTS, MAP } from '../src/simulation/config.ts';
 import { direction } from '../src/input/keyboard.ts';
 
-test('sweep stops before rock even when both endpoints are outside it', () => {
-  const p = moveWithCollisions({ x: -4, z: 0 }, { x: 10, z: 0 });
-  assert.ok(canStand(p));
-  assert.ok(Math.abs(p.x - (OBSTACLE.x - OBSTACLE.radius - HERO.radius)) < 1e-5);
+test('every tower blocks swept movement even with both endpoints outside', () => {
+  for (const object of SOLID_OBJECTS) {
+    const p = moveWithCollisions({ x: -4, z: object.z }, { x: 10, z: 0 });
+    assert.ok(canStand(p));
+    assert.ok(Math.abs(p.x - (object.x - object.radius - HERO.radius)) < 1e-5);
+    assert.equal(canStand(object), false);
+  }
+});
+
+test('removed central obstacle leaves the middle freely traversable', () => {
+  assert.deepEqual(moveWithCollisions({ x: -4, z: 0 }, { x: 10, z: 0 }), { x: 6, z: 0 });
 });
 
 test('all four bridge edges/base ends contain the entire hero', () => {
@@ -29,11 +36,11 @@ test('bridge/base overlap remains traversable in both directions', () => {
   }
 });
 
-test('diagonal contact slides along wall and rock; moving away releases contact', () => {
+test('diagonal contact slides along wall and tower; moving away releases contact', () => {
   const wall = moveWithCollisions({ x: 6.5, z: -5 }, { x: 1, z: 1 });
   assert.ok(canStand(wall)); assert.ok(wall.z > -4.01);
-  const rock = moveWithCollisions({ x: 0, z: -1 }, { x: 2, z: 1 });
-  assert.ok(canStand(rock)); assert.ok(rock.x > 0.6 && rock.z < -0.65);
+  const tower = moveWithCollisions({ x: -2, z: -12 }, { x: 2, z: 1 });
+  assert.ok(canStand(tower)); assert.ok(tower.x > -1.9 && tower.z < -11.65);
   const away = moveWithCollisions(wall, { x: -1, z: 0 });
   assert.ok(away.x < wall.x - 0.99);
 });
@@ -46,7 +53,7 @@ test('long frame stalls cannot leave arena and rendered positions stay valid', (
   }
 });
 
-test('collision result is FPS-independent and interpolation never cuts through rock', () => {
+test('collision result is FPS-independent and interpolation never cuts through towers', () => {
   const results = [];
   for (const fps of [30, 60, 144]) {
     const sim = createMovement();

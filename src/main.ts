@@ -132,7 +132,8 @@ try {
     healthStatus.textContent = `Герой ${combat.hero.health}/${combat.hero.maxHealth} · Цел ${dummyText}${hit ? ` · Щети ${hit.damage}` : ''}${combat.casting() ? ' · Кастване' : ''}`;
     for (const action of Object.keys(buttons) as Action[]) {
       const cooldown = combat.cooldown(action);
-      buttons[action].textContent = cooldown > 1e-12 ? `${cooldown.toFixed(1)} s` : action === 'attack' ? 'АТАКА' : action.toUpperCase();
+      buttons[action].textContent = cooldown > 1e-12 ? cooldown.toFixed(1) : action === 'attack' ? 'АТАКА' : action.toUpperCase();
+      buttons[action].classList.toggle('on-cooldown', cooldown > 1e-12);
       buttons[action].setAttribute('aria-disabled', String(cooldown > 1e-12 || Boolean(combat.casting())));
     }
     controls.update();

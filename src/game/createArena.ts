@@ -7,10 +7,10 @@ import { Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { Color3, Color4 } from '@babylonjs/core/Maths/math.color';
 import { HemisphericLight } from '@babylonjs/core/Lights/hemisphericLight';
 import { DirectionalLight } from '@babylonjs/core/Lights/directionalLight';
-import { MAP, HERO, TARGET, OBSTACLE } from '../simulation/config';
+import { MAP, HERO, TARGET, TOWER_RADIUS } from '../simulation/config';
 import { mapGeometry } from './mapGeometry';
 
-/** Buildings are visual landmarks; combat and collision are separate milestones. */
+/** Buildings have shared solid footprints; their combat behavior is a future milestone. */
 export function createArena(engine: Engine) {
   const scene = new Scene(engine);
   scene.clearColor = Color4.FromHexString('#173f60ff');
@@ -126,7 +126,7 @@ export function createArena(engine: Engine) {
     const trim = tower.team === 'blue' ? m.blueDark : m.coralDark;
     const { x, z } = tower;
     shadow(x, z, 3.5);
-    g.cylinder(m.edgeLight, x, 0.27, z, 3.1, 2.7, 0.4, 8);
+    g.cylinder(m.edgeLight, x, 0.27, z, TOWER_RADIUS * 2, 2.7, 0.4, 8);
     g.cylinder(m.gold, x, 0.49, z, 2.75, 2.75, 0.12, 8);
     g.cylinder(m.edge, x, 1.14, z, 2.1, 1.45, 1.25, 6);
     g.cylinder(trim, x, 1.85, z, 1.85, 2.2, 0.35, 6);
@@ -153,8 +153,6 @@ export function createArena(engine: Engine) {
     g.box(m.green, relic.x, 0.84, relic.z, 0.2, 0.7, 0.2);
     g.box(m.green, relic.x, 0.84, relic.z, 0.65, 0.2, 0.2);
   }
-  g.ring(m.snowShade, 0, 0.1, 0, 5.6, 0.12);
-  for (let i = 0; i < 3; i++) g.box(m.snowShade, 0, 0.1, 0, 0.15, 0.03, 4.6, i * Math.PI / 3);
   // Cliff shoulders and snow-capped firs frame the path without covering it.
   for (const side of [-1, 1]) {
     for (let i = 0; i < 15; i++) {
@@ -171,13 +169,6 @@ export function createArena(engine: Engine) {
       }
     }
   }
-  // One solid landmark; its circular footprint is shared with simulation.
-  const rock = OBSTACLE;
-  g.cylinder(m.rockLight, rock.x, rock.height / 2 + 0.08, rock.z,
-    rock.radius * 2, rock.radius * 1.55, rock.height, 16);
-  g.cylinder(m.ice, rock.x, rock.height + 0.08, rock.z,
-    rock.radius * 1.55, rock.radius * 1.25, 0.18, 16);
-  g.ring(m.snow, rock.x, 0.12, rock.z, rock.radius * 2 - 0.04, 0.08);
   // Toy-like preview characters. Their placements come from the shared config.
   // A separate geometry batch keeps the moving hero out of the static map.
   const actor = mapGeometry(scene);

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createCombat } from '../src/simulation/combat.ts';
 import { createMovement, STEP } from '../src/simulation/movement.ts';
-import { HERO, TARGET, OBSTACLE } from '../src/simulation/config.ts';
+import { HERO, TARGET, SOLID_OBJECTS } from '../src/simulation/config.ts';
 import { canStand } from '../src/simulation/collision.ts';
 import { setupKeyboard } from '../src/input/keyboard.ts';
 import { createAimMarker } from '../src/game/aimMarker.ts';
@@ -25,14 +25,25 @@ test('Q flies straight, deals 120 once, and expires at range on a miss', () => {
   assert.equal(c.projectiles().length, 0); assert.equal(c.dummy.health, 1880);
 });
 
-test('Q stops at the first rock or arena edge and cannot damage a target beyond it', () => {
-  const c = createCombat(); c.dummy.position = { x: OBSTACLE.x, z: 3 };
-  const position = { x: OBSTACLE.x, z: -4 };
-  c.cast(position, aim('q')); ticks(c, 80, position);
-  assert.equal(c.dummy.health, TARGET.health); assert.equal(c.projectiles().length, 0);
-  ticks(c, 240, position); const edge = { x: -6, z: 5 };
+test('Q crosses solid towers, hits enemies behind them and stops only at range on a miss', () => {
+  for (const object of SOLID_OBJECTS) {
+    const c = createCombat(), position = { x: object.x, z: object.z - 3 };
+    c.dummy.position = { x: object.x, z: object.z + 3 };
+    c.cast(position, aim('q')); ticks(c, 80, position);
+    assert.equal(c.dummy.health, TARGET.health - HERO.q.damage);
+    assert.equal(c.projectiles().length, 0);
+  }
+  const c = createCombat(), edge = { x: -6, z: 5 };
   c.cast(edge, aim('q', -1, 0)); ticks(c, 30, edge);
-  assert.equal(c.projectiles().length, 0);
+  assert.equal(c.projectiles().length, 1); // Arena scenery cannot consume Q.
+  ticks(c, 30, edge); assert.equal(c.projectiles().length, 0);
+});
+
+test('E can be placed through a tower and damages an enemy beyond it', () => {
+  const c = createCombat(), position = { x: 0, z: 8 };
+  c.dummy.position = { x: 0, z: 14 };
+  c.cast(position, aim('e')); ticks(c, 39, position);
+  assert.equal(c.dummy.health, TARGET.health - HERO.e.damage);
 });
 
 test('Q cannot home toward a target moved out of its line', () => {
@@ -80,9 +91,9 @@ test('R travels exactly 3 in 0.2 seconds, blocks all other actions and never dea
   assert.equal(c.dummy.health, TARGET.health); assert.ok(Math.abs(c.cooldown('r') - 5.8) < 1e-9);
 });
 
-test('R stops at rock and every map boundary without sliding or penetration', () => {
+test('R stops at towers and every map boundary without sliding or penetration', () => {
   for (const [position, direction] of [
-    [{ x: 2, z: -2 }, { x: 0, z: 1 }], [{ x: -6, z: 6 }, { x: -1, z: 0 }],
+    [{ x: 0, z: 8 }, { x: 0, z: 1 }], [{ x: -6, z: 6 }, { x: -1, z: 0 }],
     [{ x: 6, z: 6 }, { x: 1, z: 0 }], [{ x: 0, z: 34 }, { x: 0, z: 1 }],
     [{ x: 0, z: -34 }, { x: 0, z: -1 }],
   ]) {
