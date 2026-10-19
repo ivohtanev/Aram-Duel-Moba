@@ -56,7 +56,12 @@ test('cooldowns switch clears existing timers and retains cast locks, damage and
   assert.equal(c.cooldown('q'), HERO.q.cooldown);
 });
 
-class Surface extends EventTarget { hidden = false; disabled = false; textContent = ''; }
+class Surface extends EventTarget {
+  hidden = false; disabled = false; textContent = '';
+  attributes = new Map();
+  setAttribute(key, value) { this.attributes.set(key, value); }
+  querySelector() { return null; }
+}
 test('hidden tab stops the loop, preserves combat clocks and resumes without catching up wall time', () => {
   const c = createCombat(), m = createMovement(), page = new Surface();
   let callback, now = 0, lastTime;
@@ -78,7 +83,7 @@ test('hidden tab stops the loop, preserves combat clocks and resumes without cat
 });
 
 const flush = () => new Promise(resolve => setImmediate(resolve));
-test('fullscreen hides on actual entry, returns on exit, prevents duplicate requests and disposes', async () => {
+test('fullscreen stays visible on entry, toggles exit, prevents duplicate requests and disposes', async () => {
   const page = new Surface(), button = new Surface(), status = new Surface();
   page.fullscreenEnabled = true; page.fullscreenElement = null;
   let resolve, requests = 0;
@@ -88,7 +93,14 @@ test('fullscreen hides on actual entry, returns on exit, prevents duplicate requ
   button.dispatchEvent(new Event('click')); button.dispatchEvent(new Event('click'));
   assert.equal(requests, 1); assert.equal(button.disabled, true); assert.equal(button.hidden, false);
   page.fullscreenElement = {}; page.dispatchEvent(new Event('fullscreenchange'));
-  assert.equal(button.hidden, true); resolve(); await flush();
+  assert.equal(button.hidden, false); resolve(); await flush();
+  assert.equal(button.attributes.get('aria-pressed'), 'true');
+  let exits = 0;
+  page.exitFullscreen = async () => {
+    exits++; page.fullscreenElement = null; page.dispatchEvent(new Event('fullscreenchange'));
+  };
+  button.dispatchEvent(new Event('click')); await flush(); assert.equal(exits, 1);
+  assert.equal(button.attributes.get('aria-pressed'), 'false');
   page.fullscreenElement = null; page.dispatchEvent(new Event('fullscreenchange'));
   assert.equal(button.hidden, false); assert.equal(button.disabled, false);
   ui.dispose(); button.dispatchEvent(new Event('click')); assert.equal(requests, 1);
@@ -109,13 +121,66 @@ test('debug footprints follow simulation, remove dead actors/effects, hide and d
   const engine = new NullEngine(), scene = new Scene(engine), debug = createDebugView(scene);
   const projectile = { id: 1, kind: 'q', position }, area = { id: 2, position };
   debug.update(true, position, TARGET.spawn, [projectile], [area]);
-  assert.equal(scene.meshes.length, 5);
+  assert.equal(scene.meshes.length, 8);
   const hero = scene.getMeshByName('debug-hero');
   assert.equal(hero.position.x, -2);
   assert.ok(Math.abs(hero.getBoundingInfo().boundingBox.maximum.x - HERO.radius) < 1e-6);
   debug.update(true, { x: 1, z: 2 }, null, [], []);
-  assert.equal(scene.meshes.length, 2); assert.equal(hero.position.x, 1);
+  assert.equal(scene.meshes.length, 5); assert.equal(hero.position.x, 1);
   debug.update(false, position, null, [], []); assert.equal(scene.meshes.length, 0);
   debug.update(true, position, TARGET.spawn, [], []); debug.dispose();
   assert.equal(scene.meshes.length, 0); scene.dispose(); engine.dispose();
+});
+
+function mobileFullscreen(lock) {
+  const page = new Surface(), button = new Surface(), status = new Surface();
+  let unlocks = 0;
+  page.fullscreenEnabled = true;
+  page.defaultView = { matchMedia: () => ({ matches: true }), screen: {
+    orientation: { lock, unlock: () => unlocks++ },
+  } };
+  page.documentElement = { requestFullscreen: async () => {
+    page.fullscreenElement = {}; page.dispatchEvent(new Event('fullscreenchange'));
+  } };
+  page.exitFullscreen = async () => {
+    page.fullscreenElement = null; page.dispatchEvent(new Event('fullscreenchange'));
+  };
+  return { page, button, status, unlocks: () => unlocks };
+}
+
+test('mobile requests landscape and restores automatic orientation on button and system exits', async () => {
+  const locks = [], f = mobileFullscreen(async value => { locks.push(value); });
+  const ui = setupFullscreen(f.button, f.status, f.page);
+  for (const systemExit of [false, true]) {
+    f.button.dispatchEvent(new Event('click')); await flush();
+    assert.equal(f.button.hidden, false);
+    if (systemExit) await f.page.exitFullscreen();
+    else { f.button.dispatchEvent(new Event('click')); await flush(); }
+  }
+  assert.deepEqual(locks, ['landscape', 'landscape']); assert.equal(f.unlocks(), 2);
+  ui.dispose(); assert.equal(f.unlocks(), 2);
+});
+
+test('late orientation lock cannot survive system exit or disposal', async () => {
+  for (const dispose of [false, true]) {
+    let finish;
+    const f = mobileFullscreen(() => new Promise(resolve => { finish = resolve; }));
+    const ui = setupFullscreen(f.button, f.status, f.page);
+    f.button.dispatchEvent(new Event('click')); await flush();
+    if (dispose) ui.dispose(); else await f.page.exitFullscreen();
+    finish(); await flush();
+    assert.ok(f.unlocks() >= 1);
+    ui.dispose();
+  }
+});
+
+test('rejected or unavailable orientation lock leaves fullscreen exit usable', async () => {
+  for (const lock of [undefined, async () => { throw new Error('Unsupported'); }]) {
+    const f = mobileFullscreen(lock), ui = setupFullscreen(f.button, f.status, f.page);
+    f.button.dispatchEvent(new Event('click')); await flush();
+    assert.equal(f.button.disabled, false); assert.equal(f.button.hidden, false);
+    assert.ok(f.status.textContent.length > 0);
+    f.button.dispatchEvent(new Event('click')); await flush();
+    assert.equal(f.page.fullscreenElement, null); ui.dispose();
+  }
 });

@@ -5,7 +5,7 @@ import type { LinesMesh } from '@babylonjs/core/Meshes/linesMesh.js';
 import type { Scene } from '@babylonjs/core/scene.js';
 import type { Point } from '../simulation/movement.ts';
 import type { Projectile, Area } from '../simulation/combat.ts';
-import { HERO, TARGET, OBSTACLE } from '../simulation/config.ts';
+import { HERO, TARGET, SOLID_OBJECTS } from '../simulation/config.ts';
 import '@babylonjs/core/Shaders/color.vertex.js';
 import '@babylonjs/core/Shaders/color.fragment.js';
 
@@ -31,7 +31,7 @@ export function createDebugView(scene: Scene) {
       };
       circle('hero', hero, HERO.radius, '#9effc5');
       if (dummy) circle('dummy', dummy, TARGET.radius, '#ff8e9d');
-      circle('obstacle', OBSTACLE, OBSTACLE.radius, '#ffee87');
+      SOLID_OBJECTS.forEach((object, index) => circle(`object-${index}`, object, object.radius, '#ffee87'));
       for (const p of projectiles) if (p.kind === 'q') circle(`q-${p.id}`, p.position, HERO.q.radius, '#b8faff');
       for (const a of areas) circle(`e-${a.id}`, a.position, HERO.e.radius, '#ffb36b');
       for (const [id, mesh] of meshes) if (!live.has(id)) { mesh.dispose(); meshes.delete(id); }

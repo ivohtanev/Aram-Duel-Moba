@@ -28,9 +28,11 @@ export const HERO = {
   r: { distance: 3, duration: 0.2, cooldown: 6 },
 } as const;
 export const TARGET = { spawn: { x: 1.4, z: 4 }, radius: 0.45, health: 2000, respawnDelay: 2 } as const;
-export const OBSTACLE = { x: 2, z: 0, radius: 1.1, height: 1.4 } as const;
+// Solid building footprints; brush and collectible relics remain traversable.
+export const TOWER_RADIUS = 1.55;
+export const SOLID_OBJECTS = MAP.towers.map(tower => ({ ...tower, radius: TOWER_RADIUS }));
 
-/** Walkable footprint only; decorative walls, towers and brush have no collisions yet. */
+/** Walkable footprint only; solid objects are checked separately by collision.ts. */
 export function isOnMap(x: number, z: number, inset = 0): boolean {
   if (!Number.isFinite(x) || !Number.isFinite(z) || !Number.isFinite(inset) || inset < 0) return false;
   if (Math.abs(x) <= MAP.bridge.width / 2 - inset && Math.abs(z) <= MAP.bridge.length / 2 - inset) return true;

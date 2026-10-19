@@ -1,4 +1,4 @@
-import { HERO, MAP, OBSTACLE, isOnMap } from './config.ts';
+import { HERO, MAP, SOLID_OBJECTS, isOnMap } from './config.ts';
 
 type Point = { x: number; z: number };
 type Interval = { enter: number; exit: number; normal: (p: Point) => Point };
@@ -55,18 +55,20 @@ function boundaryHit(p: Point, d: Point, radius: number = HERO.radius) {
 
 export function canStand(p: Point): boolean {
   return isOnMap(p.x, p.z, HERO.radius)
-    && Math.hypot(p.x - OBSTACLE.x, p.z - OBSTACLE.z) >= OBSTACLE.radius + HERO.radius - EPS;
+    && SOLID_OBJECTS.every(object => Math.hypot(p.x - object.x, p.z - object.z) >= object.radius + HERO.radius - EPS);
 }
 
-/** Fraction of a straight segment before the first wall/rock, without sliding. */
+/** Fraction of a straight segment before the first boundary/solid object, without sliding. */
 export function straightFraction(p: Point, d: Point, radius: number): number {
   if (!Number.isFinite(d.x) || !Number.isFinite(d.z) || !isOnMap(p.x, p.z, radius)) return 0;
   if (dot(d, d) < EPS * EPS) return 1;
-  if (Math.hypot(p.x - OBSTACLE.x, p.z - OBSTACLE.z) < OBSTACLE.radius + radius - EPS) return 0;
+  if (SOLID_OBJECTS.some(object => Math.hypot(p.x - object.x, p.z - object.z) < object.radius + radius - EPS)) return 0;
   let t = boundaryHit(p, d, radius)?.t ?? 1;
-  const rock = circle(p, d, OBSTACLE, OBSTACLE.radius + radius);
-  if (rock && rock.enter >= -EPS && rock.enter <= 1 && rock.exit > EPS) {
-    t = Math.min(t, Math.max(0, Math.min(1 - 1e-12, rock.enter)));
+  for (const object of SOLID_OBJECTS) {
+    const hit = circle(p, d, object, object.radius + radius);
+    if (hit && hit.enter >= -EPS && hit.enter <= 1 && hit.exit > EPS) {
+      t = Math.min(t, Math.max(0, Math.min(1 - 1e-12, hit.enter)));
+    }
   }
   return Math.max(0, Math.min(1, t));
 }
@@ -80,12 +82,14 @@ export function moveWithCollisions(start: Point, displacement: Point): Point {
   let p = { ...start }, d = { ...displacement };
   for (let iteration = 0; iteration < 4 && dot(d, d) > EPS * EPS; iteration++) {
     let hit = boundaryHit(p, d);
-    const obstacle = circle(p, d, OBSTACLE, OBSTACLE.radius + HERO.radius);
-    if (obstacle && obstacle.enter >= -EPS && obstacle.enter < 1 && obstacle.exit > EPS) {
-      const t = Math.max(0, obstacle.enter);
-      const outward = obstacle.normal(at(p, d, t));
-      const normal = { x: -outward.x, z: -outward.z };
-      if (dot(d, normal) > EPS && (!hit || t < hit.t)) hit = { t, normal };
+    for (const object of SOLID_OBJECTS) {
+      const obstacle = circle(p, d, object, object.radius + HERO.radius);
+      if (obstacle && obstacle.enter >= -EPS && obstacle.enter < 1 && obstacle.exit > EPS) {
+        const t = Math.max(0, obstacle.enter);
+        const outward = obstacle.normal(at(p, d, t));
+        const normal = { x: -outward.x, z: -outward.z };
+        if (dot(d, normal) > EPS && (!hit || t < hit.t)) hit = { t, normal };
+      }
     }
     if (!hit) {
       const end = at(p, d, 1);

@@ -122,12 +122,9 @@ export function createCombat() {
         }
         const travel = Math.min(projectile.remaining, HERO.q.speed * STEP);
         const delta = { x: projectile.direction.x * travel, z: projectile.direction.z * travel };
-        const wall = straightFraction(projectile.position, delta, HERO.q.radius);
         const hit = isValidTarget(health.hero, target) ? targetFraction(projectile.position, delta, target.position, TARGET.radius + HERO.q.radius) : Infinity;
-        // A wall wins exact ties, so Q never damages through an obstacle.
-        if (hit < wall) { health.damage(health.hero, target, HERO.q.damage); return false; }
-        if (wall < 1) return false;
-        if (hit === 1) { health.damage(health.hero, target, HERO.q.damage); return false; }
+        // Ability effects ignore scenery; only enemy hitboxes and range stop Q.
+        if (hit <= 1) { health.damage(health.hero, target, HERO.q.damage); return false; }
         projectile.position.x += delta.x; projectile.position.z += delta.z;
         projectile.remaining -= travel;
         return projectile.remaining > 1e-12;
