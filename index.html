@@ -7,10 +7,35 @@
     <title>Aram Duel — Скрежният мост</title>
   </head>
   <body>
-    <canvas id="game" aria-label="Скрежният мост. WASD/стрелки за движение; Space/Q/E/R: задръж за обсег, отпусни за каст. Камера 4×, зона за оглед вдясно."></canvas>
+    <main id="start-screen" aria-labelledby="start-title">
+      <div class="start-card">
+        <span class="start-mark" aria-hidden="true">❖</span>
+        <p class="start-eyebrow">СКРЕЖНИЯТ МОСТ</p>
+        <h1 id="start-title">ARAM <span>DUEL</span></h1>
+        <p class="start-description">Избери как да влезеш в арената.</p>
+        <div class="start-actions">
+          <button id="start-test" type="button">Тест</button>
+          <button id="start-game" type="button">Старт игра</button>
+        </div>
+      </div>
+    </main>
+    <div id="play-screen" hidden>
+    <canvas id="game" tabindex="-1" aria-label="Скрежният мост. WASD/стрелки за движение; Space/Q/E/R: задръж за обсег, отпусни за каст. Камера 4×, зона за оглед вдясно."></canvas>
     <header class="topbar">
       <div class="brand"><span class="brand-mark" aria-hidden="true">❖</span><div><strong>ARAM <span>DUEL</span></strong><small>ЛЕДЕНА АРЕНА</small></div></div>
-      <div class="preview-tag"><i></i> ТРЕНИРОВЪЧЕН ПОЛИГОН</div>
+      <div class="preview-tag"><i></i><span id="mode-label">ТРЕНИРОВЪЧЕН ПОЛИГОН</span></div>
+      <div class="training-tools" aria-label="Настройки на арената">
+        <button id="back-to-menu" type="button">Меню</button>
+        <button id="fullscreen" type="button" hidden>⛶ Цял екран</button>
+        <details id="training-panel" hidden>
+          <summary>Полигон</summary>
+          <div class="training-settings">
+            <button id="reset" type="button">Ново начало</button>
+            <label><input id="cooldowns" type="checkbox" checked /> Cooldown-и</label>
+            <label><input id="debug" type="checkbox" /> Debug / hitbox-и</label>
+          </div>
+        </details>
+      </div>
     </header>
     <section class="map-caption" aria-label="Карта">
       <div class="eyebrow"><span></span> 01 / ЗАМРЪЗНАЛАТА ПРОПАСТ</div>
@@ -31,7 +56,9 @@
     </div>
     <div id="cancel-cast" hidden>ОТКАЗ</div>
     <output id="health-status" aria-label="Живот и последно попадение"></output>
+    <output id="debug-status" hidden aria-label="Диагностика на полигона"></output>
     <output id="cast-status" aria-live="polite">Приближи целта · АТАКА / Space</output>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

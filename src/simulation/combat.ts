@@ -37,6 +37,7 @@ function targetFraction(start: Point, delta: Point, target: Point, radius: numbe
 /** Every timer and displacement uses the same fixed movement clock. */
 export function createCombat() {
   const health = createHealth();
+  let cooldownsEnabled = true;
   let projectiles: Projectile[] = [], areas: Area[] = [], nextId = 0;
   let pending: Cast | undefined;
   let dash: { direction: Point; remaining: number } | undefined;
@@ -65,13 +66,21 @@ export function createCombat() {
     const aim: Aim = { ...raw, direction: { x: raw.direction.x / length, z: raw.direction.z / length }, distance: Math.min(reach, raw.distance) };
     const target = raw.action === 'attack' ? nearestTarget(health.hero, [health.dummy], reach) : undefined;
     if (raw.action === 'attack' && !target) return 'no-target';
-    cooldowns[raw.action] = raw.action === 'attack' ? HERO.attack.interval : HERO[raw.action].cooldown;
+    cooldowns[raw.action] = cooldownsEnabled ? (raw.action === 'attack' ? HERO.attack.interval : HERO[raw.action].cooldown) : 0;
     if (raw.action === 'r') dash = { direction: aim.direction, remaining: HERO.r.duration };
     else pending = { aim, remaining: HERO[raw.action].castTime, target, generation: target?.generation };
     return 'fired';
   };
   return {
     ...health, cast,
+    reset() {
+      health.reset(); projectiles = []; areas = []; pending = undefined; dash = undefined;
+      for (const action of Object.keys(cooldowns) as Action[]) cooldowns[action] = 0;
+    },
+    setCooldownsEnabled(enabled: boolean) {
+      cooldownsEnabled = enabled;
+      if (!enabled) for (const action of Object.keys(cooldowns) as Action[]) cooldowns[action] = 0;
+    },
     projectiles: () => projectiles as readonly Projectile[],
     areas: () => areas as readonly Area[],
     cooldown: (action: Action = 'attack') => cooldowns[action],

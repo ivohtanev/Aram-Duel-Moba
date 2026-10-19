@@ -18,6 +18,7 @@ export function createMovement() {
   let previous = { ...current };
   let remainder = 0;
   return {
+    reset() { current = { ...HERO.spawn }; previous = { ...current }; remainder = 0; },
     advance(seconds: number, input: Point, onStep?: (position: Point) => void,
       move: (position: Point, input: Point) => Point = step) {
       if (!Number.isFinite(seconds) || seconds < 0) return;

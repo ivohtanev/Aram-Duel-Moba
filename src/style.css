@@ -1,4 +1,18 @@
 :root { font-family: 'Segoe UI', system-ui, sans-serif; color: #e9f8ff; background: #173f60; font-synthesis: none; }
+[hidden] { display: none !important; }
+#play-screen { width: 100%; height: 100%; }
+#start-screen { position: absolute; inset: 0; display: grid; place-items: center; overflow: auto; padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left)); background: radial-gradient(ellipse at 50% 20%, #357e9b 0%, #173f60 50%, #0a243e 100%); }
+.start-card { width: min(100%, 440px); text-align: center; }
+.start-mark { color: #a4edf8; font-size: 64px; text-shadow: 0 0 40px #7feaff60; }
+.start-eyebrow { margin-top: 16px; font-size: 11px; letter-spacing: .25em; color: #9ed7e8; }
+#start-title { margin: 12px 0; font-size: clamp(34px, 8vw, 56px); letter-spacing: .08em; }
+#start-title span { font-weight: 400; color: #a5dceb; }
+.start-description { font-size: 14px; }
+.start-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 32px; }
+.start-actions button { min-height: 56px; padding: 14px; border: 1px solid #a3d7ed80; border-radius: 12px; color: #d8faff; background: #123b5edb; font-size: 16px; font-weight: 650; }
+.start-actions #start-game { background: #b4eef5; color: #123b5e; border-color: #d8faff; }
+.start-actions button:hover { filter: brightness(1.12); }
+@media (max-height: 420px) { .start-mark { font-size: 36px; } .start-eyebrow { margin-top: 6px; } #start-title { margin: 6px 0; font-size: 34px; } .start-actions { margin-top: 20px; } }
 html { touch-action: none; overscroll-behavior: none; }
 * { box-sizing: border-box; }
 html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
@@ -75,3 +89,17 @@ p { margin: 0; color: #aed2e3; font-size: 12px; }
 .action-controls button[aria-disabled='true'] { color: #b3c9d4; border-color: #a7e7f940; }
 @media (orientation: portrait) { #camera-drag-zone { width: 42vw; padding: 8px; text-align: center; } #health-status { top: 90px; } }
 @media (max-height: 500px) { #camera-drag-zone { top: 25%; height: 90px; min-height: 0; } #camera-drag-zone small { display: none; } }
+/* Compact training controls stay above the map without covering the thumb zones. */
+.training-tools { display: flex; align-items: start; gap: 8px; pointer-events: auto; }
+.training-tools button, .training-tools summary { border: 1px solid #a3d7ed70; border-radius: 10px; background: #123b5ef5; color: #d8faff; padding: 10px 12px; font-size: 12px; min-height: 44px; cursor: pointer; }
+.training-tools button:disabled { opacity: .6; cursor: wait; }
+#training-panel { position: relative; }
+#training-panel summary:focus-visible { outline: 2px solid #b2f5ff; outline-offset: 4px; }
+.training-settings { position: absolute; top: calc(100% + 8px); right: 0; width: 200px; padding: 10px; display: grid; gap: 6px; background: #123b5ef5; border: 1px solid #a3d7ed70; border-radius: 12px; }
+.training-settings label { display: flex; align-items: center; gap: 8px; min-height: 40px; font-size: 12px; cursor: pointer; }
+.training-settings input { width: 18px; height: 18px; accent-color: #92e6f3; }
+.topbar { z-index: 2; }
+#debug-status { position: absolute; top: 120px; left: max(22px, env(safe-area-inset-left)); padding: 8px 10px; background: #123b5ef0; border-radius: 10px; white-space: pre-line; font-size: 11px; font-variant-numeric: tabular-nums; pointer-events: none; }
+@media (max-height: 500px) { #debug-status { top: 96px; font-size: 10px; } }
+@media (orientation: portrait) { .topbar { flex-wrap: nowrap; gap: 8px; } .brand { width: auto; } .brand strong { font-size: 14px; } .brand small, .brand-mark { display: none; } .training-tools button, .training-tools summary { padding: 10px 8px; font-size: 11px; } #debug-status { top: 128px; } }
+@media (orientation: portrait) and (max-width: 440px) { .topbar { flex-wrap: wrap; } .brand { width: 100%; } .training-tools { margin-left: auto; } #health-status { top: 112px; } #debug-status { top: 150px; } }

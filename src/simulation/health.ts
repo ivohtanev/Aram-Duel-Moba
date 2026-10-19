@@ -18,6 +18,15 @@ export function createHealth() {
   let lastHit: { targetId: string; damage: number } | undefined;
   return {
     hero, dummy,
+    reset() {
+      for (const [actor, config] of [[hero, HERO], [dummy, TARGET]] as const) {
+        actor.position = { ...config.spawn };
+        actor.health = actor.maxHealth = config.health;
+        actor.respawnIn = 0;
+        actor.generation++;
+      }
+      lastHit = undefined;
+    },
     lastHit: () => lastHit,
     damage(source: Combatant, target: Combatant, amount: number): number {
       if (!isValidTarget(source, target) || !Number.isFinite(amount) || amount <= 0) return 0;

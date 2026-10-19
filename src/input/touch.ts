@@ -111,6 +111,7 @@ export function setupTouch(
     },
     face(input: Point) { const length = Math.hypot(input.x, input.z); if (length > 0) facing = { x: input.x / length, z: input.z / length }; },
     reset,
+    resetFacing() { facing = { x: -46 / Math.hypot(30, 46), z: 30 / Math.hypot(30, 46) }; },
     dispose() { reset(); for (const remove of listeners) remove(); },
   };
 }

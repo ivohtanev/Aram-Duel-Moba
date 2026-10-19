@@ -80,7 +80,7 @@ export function setupMapCamera(
   page.addEventListener('visibilitychange', end);
   setZoom(zoom);
   return {
-    update, resize,
+    update, resize, reset: end,
     view(mode: 'overview' | 'arena') { end(); setZoom(mode === 'overview' ? 1 : 2); },
     zoomBy: (factor: number) => setZoom(zoom * factor),
     dispose() {

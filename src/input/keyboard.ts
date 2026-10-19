@@ -17,7 +17,7 @@ export function setupKeyboard(onSuspend: () => void, host: Window = window, page
   const down = (event: KeyboardEvent) => {
     if (event.altKey || event.ctrlKey || event.metaKey) { clear(); return; }
     const target = event.target as HTMLElement | null;
-    if (target?.closest?.('input, textarea, select, [contenteditable]:not([contenteditable="false"])')) return;
+    if (target?.closest?.('input, textarea, select, button, summary, [contenteditable]:not([contenteditable="false"])')) return;
     if (event.code === 'Escape') { held = undefined; return; }
     if (abilityCodes[event.code] && onCast) {
       event.preventDefault();
@@ -44,6 +44,7 @@ export function setupKeyboard(onSuspend: () => void, host: Window = window, page
   return {
     read: () => direction(keys),
     held: () => held ? abilityCodes[held] : undefined,
+    reset: clear,
     dispose() {
       clear();
       host.removeEventListener('keydown', down);
