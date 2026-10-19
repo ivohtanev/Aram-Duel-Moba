@@ -35,8 +35,10 @@ function targetFraction(start: Point, delta: Point, target: Point, radius: numbe
 }
 
 /** Every timer and displacement uses the same fixed movement clock. */
-export function createCombat() {
+export function createCombat(options: { targets?: () => readonly Combatant[] } = {}) {
   const health = createHealth();
+  const targets = () => options.targets?.() ?? [health.dummy];
+  const radius = (target: Combatant) => target.radius ?? TARGET.radius;
   let cooldownsEnabled = true;
   let projectiles: Projectile[] = [], areas: Area[] = [], nextId = 0;
   let pending: Cast | undefined;
@@ -64,7 +66,7 @@ export function createCombat() {
     if (!Number.isFinite(length) || length < 1e-9 || !Number.isFinite(raw.distance) || raw.distance < 0) return 'invalid';
     const reach = raw.action === 'r' ? HERO.r.distance : HERO[raw.action].range;
     const aim: Aim = { ...raw, direction: { x: raw.direction.x / length, z: raw.direction.z / length }, distance: Math.min(reach, raw.distance) };
-    const target = raw.action === 'attack' ? nearestTarget(health.hero, [health.dummy], reach) : undefined;
+    const target = raw.action === 'attack' ? nearestTarget(health.hero, targets(), reach) : undefined;
     if (raw.action === 'attack' && !target) return 'no-target';
     cooldowns[raw.action] = cooldownsEnabled ? (raw.action === 'attack' ? HERO.attack.interval : HERO[raw.action].cooldown) : 0;
     if (raw.action === 'r') dash = { direction: aim.direction, remaining: HERO.r.duration };
@@ -77,6 +79,7 @@ export function createCombat() {
       health.reset(); projectiles = []; areas = []; pending = undefined; dash = undefined;
       for (const action of Object.keys(cooldowns) as Action[]) cooldowns[action] = 0;
     },
+    clearEffects() { projectiles = []; areas = []; pending = undefined; dash = undefined; },
     setCooldownsEnabled(enabled: boolean) {
       cooldownsEnabled = enabled;
       if (!enabled) for (const action of Object.keys(cooldowns) as Action[]) cooldowns[action] = 0;
@@ -105,15 +108,17 @@ export function createCombat() {
       areas = areas.filter(area => {
         area.remaining -= STEP;
         if (area.remaining > 1e-12) return true;
-        if (Math.hypot(health.dummy.position.x - area.position.x, health.dummy.position.z - area.position.z) <= HERO.e.radius + TARGET.radius) {
-          health.damage(health.hero, health.dummy, HERO.e.damage);
+        for (const target of targets()) {
+          if (Math.hypot(target.position.x - area.position.x, target.position.z - area.position.z) <= HERO.e.radius + radius(target)) {
+            health.damage(health.hero, target, HERO.e.damage);
+          }
         }
         return false;
       });
       projectiles = projectiles.filter(projectile => {
-        const target = health.dummy;
         if (projectile.kind === 'attack') {
-          if (target.health <= 0 || target.id !== projectile.targetId || target.generation !== projectile.generation) return false;
+          const target = targets().find(candidate => candidate.id === projectile.targetId);
+          if (!target || target.health <= 0 || target.id !== projectile.targetId || target.generation !== projectile.generation) return false;
           const dx = target.position.x - projectile.position.x, dz = target.position.z - projectile.position.z;
           const distance = Math.hypot(dx, dz), travel = HERO.attack.projectileSpeed * STEP;
           if (distance <= travel + 1e-12) { health.damage(health.hero, target, HERO.attack.damage); return false; }
@@ -122,9 +127,14 @@ export function createCombat() {
         }
         const travel = Math.min(projectile.remaining, HERO.q.speed * STEP);
         const delta = { x: projectile.direction.x * travel, z: projectile.direction.z * travel };
-        const hit = isValidTarget(health.hero, target) ? targetFraction(projectile.position, delta, target.position, TARGET.radius + HERO.q.radius) : Infinity;
+        let target: Combatant | undefined, hit = Infinity;
+        for (const candidate of targets()) {
+          if (!isValidTarget(health.hero, candidate)) continue;
+          const fraction = targetFraction(projectile.position, delta, candidate.position, radius(candidate) + HERO.q.radius);
+          if (fraction < hit) { hit = fraction; target = candidate; }
+        }
         // Ability effects ignore scenery; only enemy hitboxes and range stop Q.
-        if (hit <= 1) { health.damage(health.hero, target, HERO.q.damage); return false; }
+        if (target && hit <= 1) { health.damage(health.hero, target, HERO.q.damage); return false; }
         projectile.position.x += delta.x; projectile.position.z += delta.z;
         projectile.remaining -= travel;
         return projectile.remaining > 1e-12;

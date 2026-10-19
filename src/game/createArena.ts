@@ -1,16 +1,16 @@
-import { TransformNode } from '@babylonjs/core/Meshes/transformNode';
-import type { Engine } from '@babylonjs/core/Engines/engine';
-import { Scene } from '@babylonjs/core/scene';
-import { FreeCamera } from '@babylonjs/core/Cameras/freeCamera';
-import { Camera } from '@babylonjs/core/Cameras/camera';
-import { Vector3 } from '@babylonjs/core/Maths/math.vector';
-import { Color3, Color4 } from '@babylonjs/core/Maths/math.color';
-import { HemisphericLight } from '@babylonjs/core/Lights/hemisphericLight';
-import { DirectionalLight } from '@babylonjs/core/Lights/directionalLight';
-import { MAP, HERO, TARGET, TOWER_RADIUS } from '../simulation/config';
-import { mapGeometry } from './mapGeometry';
+import { TransformNode } from '@babylonjs/core/Meshes/transformNode.js';
+import type { Engine } from '@babylonjs/core/Engines/engine.js';
+import { Scene } from '@babylonjs/core/scene.js';
+import { FreeCamera } from '@babylonjs/core/Cameras/freeCamera.js';
+import { Camera } from '@babylonjs/core/Cameras/camera.js';
+import { Vector3 } from '@babylonjs/core/Maths/math.vector.js';
+import { Color3, Color4 } from '@babylonjs/core/Maths/math.color.js';
+import { HemisphericLight } from '@babylonjs/core/Lights/hemisphericLight.js';
+import { DirectionalLight } from '@babylonjs/core/Lights/directionalLight.js';
+import { MAP, HERO, TARGET, TOWER_RADIUS } from '../simulation/config.ts';
+import { mapGeometry } from './mapGeometry.ts';
 
-/** Buildings have shared solid footprints; their combat behavior is a future milestone. */
+/** Shared arena geometry; building nodes can be hidden independently in lane matches. */
 export function createArena(engine: Engine) {
   const scene = new Scene(engine);
   scene.clearColor = Color4.FromHexString('#173f60ff');
@@ -37,13 +37,14 @@ export function createArena(engine: Engine) {
     gold: g.material('brass', '#e7c887'), bush: g.material('frost-brush', '#60a5b7'),
     green: g.material('relic', '#8ee9c6', 0.3),
   };
+  const structures = new Map<string, TransformNode>();
   let seed = 428;
   const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
-  const crystal = (mat: typeof m.blue, x: number, y: number, z: number, size: number) => {
-    g.cylinder(mat, x, y + size * 0.6, z, size * 0.72, 0, size * 1.2, 5);
-    g.cylinder(mat, x, y - size * 0.12, z, 0, size * 0.72, size * 0.24, 5);
+  const crystal = (mat: typeof m.blue, x: number, y: number, z: number, size: number, builder = g) => {
+    builder.cylinder(mat, x, y + size * 0.6, z, size * 0.72, 0, size * 1.2, 5);
+    builder.cylinder(mat, x, y - size * 0.12, z, 0, size * 0.72, size * 0.24, 5);
   };
-  const shadow = (x: number, z: number, size: number) => g.cylinder(m.dark, x + 0.25, 0.09, z - 0.2, size, size, 0.025, 12);
+  const shadow = (x: number, z: number, size: number, builder = g) => builder.cylinder(m.dark, x + 0.25, 0.09, z - 0.2, size, size, 0.025, 12);
   const pine = (x: number, y: number, z: number, size: number) => {
     g.cylinder(m.rock, x, y + size * 0.45, z, size * 0.23, size * 0.18, size * 0.9, 6);
     for (let i = 0; i < 3; i++) {
@@ -88,7 +89,7 @@ export function createArena(engine: Engine) {
       }
     }
   }
-  for (const base of MAP.bases) {
+  for (const [baseIndex, base] of MAP.bases.entries()) {
     const team = base.team === 'blue' ? m.blue : m.coral;
     const trim = base.team === 'blue' ? m.blueDark : m.coralDark;
     const direction = Math.sign(base.z);
@@ -102,40 +103,50 @@ export function createArena(engine: Engine) {
       const a = i / 12 * Math.PI * 2;
       g.box(m.edgeLight, Math.sin(a) * 5.3, 0.24, base.z + Math.cos(a) * 5.3, 0.18, 0.05, 1.1, a);
     }
+    const core = mapGeometry(scene);
     const coreZ = base.z + direction * 1.8;
-    shadow(0, coreZ, 5.7);
-    g.cylinder(m.edge, 0, 0.38, coreZ, 5.1, 4.5, 0.65, 8);
-    g.cylinder(m.gold, 0, 0.76, coreZ, 4.5, 4.5, 0.14, 8);
-    g.cylinder(trim, 0, 1.03, coreZ, 3.8, 3.1, 0.45, 8);
-    g.ring(team, 0, 1.26, coreZ, 2.9, 0.18);
-    crystal(team, 0, 1.6, coreZ, 2.25);
+    shadow(0, coreZ, 5.7, core);
+    core.cylinder(m.edge, 0, 0.38, coreZ, 5.1, 4.5, 0.65, 8);
+    core.cylinder(m.gold, 0, 0.76, coreZ, 4.5, 4.5, 0.14, 8);
+    core.cylinder(trim, 0, 1.03, coreZ, 3.8, 3.1, 0.45, 8);
+    core.ring(team, 0, 1.26, coreZ, 2.9, 0.18);
+    crystal(team, 0, 1.6, coreZ, 2.25, core);
     for (let i = 0; i < 4; i++) {
       const a = Math.PI / 4 + i * Math.PI / 2;
       const x = Math.sin(a) * 2.15, z = coreZ + Math.cos(a) * 2.15;
-      g.cylinder(m.edgeLight, x, 1.1, z, 0.85, 0.6, 1.45, 6);
-      g.cylinder(m.gold, x, 1.87, z, 0.75, 0.75, 0.14, 6);
+      core.cylinder(m.edgeLight, x, 1.1, z, 0.85, 0.6, 1.45, 6);
+      core.cylinder(m.gold, x, 1.87, z, 0.75, 0.75, 0.14, 6);
     }
+    const baseNode = new TransformNode(`base-${baseIndex}`, scene);
+    for (const mesh of core.finish(false)) mesh.parent = baseNode;
+    structures.set(baseNode.name, baseNode);
     for (const side of [-1, 1]) {
       pine(side * 5.5, 0.2, base.z + direction * 4.7, 2.3);
       g.box(m.edge, side * 6.7, 0.65, base.z, 1, 1.3, 2.4);
       g.box(m.snow, side * 6.7, 1.35, base.z, 1.25, 0.2, 2.65);
     }
   }
-  for (const tower of MAP.towers) {
+  for (const [towerIndex, tower] of MAP.towers.entries()) {
+    const towerGeometry = mapGeometry(scene);
     const team = tower.team === 'blue' ? m.blue : m.coral;
     const trim = tower.team === 'blue' ? m.blueDark : m.coralDark;
     const { x, z } = tower;
-    shadow(x, z, 3.5);
-    g.cylinder(m.edgeLight, x, 0.27, z, TOWER_RADIUS * 2, 2.7, 0.4, 8);
-    g.cylinder(m.gold, x, 0.49, z, 2.75, 2.75, 0.12, 8);
-    g.cylinder(m.edge, x, 1.14, z, 2.1, 1.45, 1.25, 6);
-    g.cylinder(trim, x, 1.85, z, 1.85, 2.2, 0.35, 6);
-    g.cylinder(m.snow, x, 2.08, z, 2.3, 2.3, 0.15, 6);
-    crystal(team, x, 2.35, z, 1.15);
+    shadow(x, z, 3.5, towerGeometry);
+    towerGeometry.cylinder(m.edgeLight, x, 0.27, z, TOWER_RADIUS * 2, 2.7, 0.4, 8);
+    towerGeometry.cylinder(m.gold, x, 0.49, z, 2.75, 2.75, 0.12, 8);
+    towerGeometry.cylinder(m.edge, x, 1.14, z, 2.1, 1.45, 1.25, 6);
+    towerGeometry.cylinder(trim, x, 1.85, z, 1.85, 2.2, 0.35, 6);
+    towerGeometry.cylinder(m.snow, x, 2.08, z, 2.3, 2.3, 0.15, 6);
+    crystal(team, x, 2.35, z, 1.15, towerGeometry);
     for (let i = 0; i < 3; i++) {
       const a = i * Math.PI * 2 / 3;
-      g.cylinder(m.edgeLight, x + Math.sin(a) * 0.95, 2.43, z + Math.cos(a) * 0.95, 0.4, 0.24, 0.85, 5);
+      towerGeometry.cylinder(m.edgeLight, x + Math.sin(a) * 0.95, 2.43, z + Math.cos(a) * 0.95, 0.4, 0.24, 0.85, 5);
     }
+    const towerNode = new TransformNode(`tower-${towerIndex}`, scene);
+    for (const mesh of towerGeometry.finish(false)) mesh.parent = towerNode;
+    structures.set(towerNode.name, towerNode);
+    // Low rubble remains visible and solid after the tower is destroyed.
+    g.cylinder(m.rock, x, 0.2, z, TOWER_RADIUS * 2, TOWER_RADIUS * 2, 0.25, 8);
   }
   for (const brush of MAP.brush) {
     const patch = g.cylinder(m.bush, brush.x, 0.13, brush.z, 1, 1, 0.12, 10);
@@ -204,5 +215,5 @@ export function createArena(engine: Engine) {
     vertices: scene.meshes.reduce((total, mesh) => total + mesh.getTotalVertices(), 0),
     triangles: scene.meshes.reduce((total, mesh) => total + mesh.getTotalIndices() / 3, 0),
   };
-  return { scene, hero, target };
+  return { scene, hero, target, structures };
 }

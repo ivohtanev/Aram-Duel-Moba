@@ -12,6 +12,8 @@ import { createCombatView } from './game/combatView';
 import { createDebugView } from './game/debugView';
 import { setupFullscreen } from './ui/fullscreen';
 import { setupVisibility } from './ui/visibility';
+import { createLaneMatch, LANE } from './simulation/laneMatch';
+import { createLaneView } from './game/laneView';
 import './style.css';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#game')!;
@@ -26,8 +28,17 @@ let cleanup: (() => void) | undefined;
 try {
   engine = new Engine(canvas, true, { stencil: false, doNotHandleContextLost: false });
   engine.setHardwareScalingLevel(1 / Math.min(window.devicePixelRatio || 1, 1.5));
-  const { scene, hero, target } = createArena(engine);
-  const movement = createMovement(), combat = createCombat();
+  const { scene, hero, target, structures } = createArena(engine);
+  const movement = createMovement(), training = createCombat(), match = createLaneMatch();
+  let combat = training;
+  const laneView = createLaneView(scene, structures);
+  const matchStatus = document.getElementById('match-status')!;
+  const resultPanel = document.getElementById('match-result')!;
+  const resultTitle = document.getElementById('result-title')!;
+  const rematchButton = document.getElementById('rematch')!;
+  let wasAlive = true, generation = 0;
+  const candidate = (action: Action) => mode === 'game' ? match.target(range(action))?.position ?? null
+    : combat.dummy.health > 0 ? combat.dummy.position : null;
   const combatView = createCombatView(scene), marker = createAimMarker(scene);
   const debugView = createDebugView(scene);
   const castStatus = document.getElementById('cast-status')!;
@@ -57,11 +68,11 @@ try {
         if (length > 1e-9) return { action, direction: { x: dx / length, z: dz / length }, distance: Math.min(length, range(action)), canceled: false };
       }
     }
-    return quickAim(action, position, facing, combat.dummy.health > 0 ? combat.dummy.position : null);
+    return quickAim(action, position, facing, candidate(action));
   };
   const cast = (aim: Aim) => {
     if (mode === null || document.hidden || !document.hasFocus()) return;
-    const result = combat.cast(movement.position(), aim);
+    const result = mode === 'game' ? match.cast(movement.position(), aim) : combat.cast(movement.position(), aim);
     if (result === 'fired') movement.suspend();
     castStatus.textContent = `${aim.action === 'attack' ? 'АТАКА' : aim.action.toUpperCase()} · ${
       { fired: 'кастване', cooldown: 'изчакай cooldown', 'no-target': 'няма жива цел в обсег', dead: 'героят е победен', casting: 'вече каствaш', invalid: 'отменено' }[result]}`;
@@ -69,11 +80,14 @@ try {
   const keyboard = setupKeyboard(suspend, window, document, action => cast(aimFor(action)));
   const touch = setupTouch(document.getElementById('joystick')!, document.getElementById('joystick-knob')!,
     buttons, document.getElementById('cancel-cast')!, () => movement.position(), cast, suspend,
-    window, document, () => combat.dummy.health > 0 ? combat.dummy.position : null);
+    window, document, candidate);
   const controls = setupMapCamera(scene, canvas, document.getElementById('camera-drag-zone')!, () => hero.position, () => {});
   // Training preferences survive a reset; every active input and combat effect does not.
   const reset = () => {
-    keyboard.reset(); touch.reset(); touch.resetFacing(); movement.reset(); combat.reset(); suspend();
+    keyboard.reset(); touch.reset(); touch.resetFacing();
+    if (mode === 'game') match.reset(); else combat.reset();
+    movement.reset(mode === 'game' ? LANE.spawn : undefined); suspend();
+    wasAlive = true; generation = combat.hero.generation; resultPanel.hidden = true;
     facing = { x: -46 / Math.hypot(30, 46), z: 30 / Math.hypot(30, 46) };
     const position = movement.position();
     hero.position.set(position.x, 0, position.z); target.setEnabled(true);
@@ -90,14 +104,16 @@ try {
   setCooldowns();
   const resize = () => { engine!.resize(); controls.resize(); };
   const start = (selected: 'test' | 'game') => {
-    mode = selected;
+    mode = selected; combat = mode === 'game' ? match.combat : training;
     cooldownToggle.checked = true; debugToggle.checked = false; debugStatus.hidden = true;
     trainingPanel.open = false; trainingPanel.hidden = mode !== 'test';
-    document.getElementById('mode-label')!.textContent = mode === 'test' ? 'ТРЕНИРОВЪЧЕН ПОЛИГОН' : 'ЛОКАЛНА ИГРА';
+    document.getElementById('mode-label')!.textContent = mode === 'test' ? 'ТРЕНИРОВЪЧЕН ПОЛИГОН' : 'ARAM МАЧ';
     startScreen.hidden = true; playScreen.hidden = false;
     setCooldowns(); reset(); resize();
-    castStatus.textContent = 'Приближи целта · АТАКА / Space';
+    castStatus.textContent = mode === 'game' ? 'Следвай минионите · Разруши кулите и вражеската база' : 'Приближи целта · АТАКА / Space';
   };
+  const rematch = () => start('game');
+  rematchButton.addEventListener('click', rematch);
   const startTest = () => start('test');
   const startGame = () => start('game');
   const showMenu = () => {
@@ -121,23 +137,40 @@ try {
       touch.face(input);
       const length = Math.hypot(input.x, input.z);
       if (length > 0) facing = { x: input.x / length, z: input.z / length };
-      if (lastTime !== undefined) movement.advance((now - lastTime) / 1000, input, combat.tick, combat.move);
+      if (lastTime !== undefined) movement.advance((now - lastTime) / 1000, input, mode === 'game' ? match.tick : combat.tick, mode === 'game' ? match.move : combat.move);
       lastTime = now;
     }
     const position = movement.interpolated();
     const dx = position.x - hero.position.x, dz = position.z - hero.position.z;
     if (Math.hypot(dx, dz) > 1e-8) hero.rotation.y = Math.atan2(dx, dz);
     hero.position.set(position.x, 0, position.z);
-    target.setEnabled(combat.dummy.health > 0);
+    target.setEnabled(mode === 'test' && combat.dummy.health > 0);
+    hero.setEnabled(combat.hero.health > 0);
+    laneView.update(mode === 'game', match.actors(), match.vulnerable);
+    const alive = combat.hero.health > 0;
+    if (alive !== wasAlive || generation !== combat.hero.generation) {
+      keyboard.reset(); touch.reset(); controls.reset(); suspend();
+      wasAlive = alive; generation = combat.hero.generation;
+    }
+    matchStatus.hidden = mode !== 'game';
+    if (mode === 'game') {
+      const bases = match.actors().filter(a => a.kind === 'base');
+      matchStatus.textContent = `Бази ${bases[0].health} / ${bases[1].health} · Вълна ${match.wave()} · След ${Math.ceil(match.waveIn())} s`;
+      if (match.result() && resultPanel.hidden) {
+        keyboard.reset(); touch.reset(); controls.reset(); suspend();
+      }
+      resultPanel.hidden = !match.result();
+      resultTitle.textContent = match.result() === 'blue' ? 'Победа!' : match.result() === 'coral' ? 'Загуба' : 'Равенство';
+    }
     combatView.update(combat.projectiles(), combat.areas());
     const dummyText = combat.dummy.health > 0 ? `${combat.dummy.health}/${combat.dummy.maxHealth}` : `Възстановяване ${combat.dummy.respawnIn.toFixed(1)} s`;
     const hit = combat.lastHit();
-    healthStatus.textContent = `Герой ${combat.hero.health}/${combat.hero.maxHealth} · Цел ${dummyText}${hit ? ` · Щети ${hit.damage}` : ''}${combat.casting() ? ' · Кастване' : ''}`;
+    healthStatus.textContent = `Герой ${combat.hero.health}/${combat.hero.maxHealth}${mode === 'test' ? ` · Цел ${dummyText}` : combat.hero.health <= 0 ? ` · Възстановяване ${combat.hero.respawnIn.toFixed(1)} s` : ''}${hit ? ` · Щети ${hit.damage}` : ''}${combat.casting() ? ' · Кастване' : ''}`;
     for (const action of Object.keys(buttons) as Action[]) {
       const cooldown = combat.cooldown(action);
       buttons[action].textContent = cooldown > 1e-12 ? cooldown.toFixed(1) : action === 'attack' ? 'АТАКА' : action.toUpperCase();
       buttons[action].classList.toggle('on-cooldown', cooldown > 1e-12);
-      buttons[action].setAttribute('aria-disabled', String(cooldown > 1e-12 || Boolean(combat.casting())));
+      buttons[action].setAttribute('aria-disabled', String(cooldown > 1e-12 || Boolean(combat.casting()) || !alive || (mode === 'game' && Boolean(match.result()))));
     }
     controls.update();
     const debugEnabled = mode === 'test' && debugToggle.checked;
@@ -148,7 +181,8 @@ try {
     }
     debugView.update(debugEnabled, movement.position(), combat.dummy.health > 0 ? combat.dummy.position : null, combat.projectiles(), combat.areas());
     const held = keyboard.held();
-    marker.update(position, touch.aiming() ?? (held ? aimFor(held) : undefined));
+    marker.update(position, !alive || (mode === 'game' && match.result()) ? undefined
+      : touch.aiming() ?? (held ? aimFor(held) : undefined));
     if (mode !== null && !document.hidden) scene.render();
   };
   const interrupt = () => { keyboard.reset(); touch.reset(); controls.reset(); suspend(); };
@@ -171,6 +205,7 @@ try {
     resetButton.removeEventListener('click', reset); cooldownToggle.removeEventListener('change', setCooldowns);
     startTestButton.removeEventListener('click', startTest); startGameButton.removeEventListener('click', startGame);
     menuButton.removeEventListener('click', showMenu);
+    rematchButton.removeEventListener('click', rematch); laneView.dispose();
     fullscreen.dispose(); debugView.dispose(); touch.dispose(); marker.dispose(); combatView.dispose(); keyboard.dispose(); controls.dispose(); scene.dispose(); engine?.dispose();
   };
   if (import.meta.hot) import.meta.hot.dispose(cleanup);

@@ -53,9 +53,9 @@ function boundaryHit(p: Point, d: Point, radius: number = HERO.radius) {
   return end < 1 ? { t: Math.max(0, end), normal: last.normal(at(p, d, end)) } : undefined;
 }
 
-export function canStand(p: Point): boolean {
-  return isOnMap(p.x, p.z, HERO.radius)
-    && SOLID_OBJECTS.every(object => Math.hypot(p.x - object.x, p.z - object.z) >= object.radius + HERO.radius - EPS);
+export function canStand(p: Point, radius: number = HERO.radius): boolean {
+  return isOnMap(p.x, p.z, radius)
+    && SOLID_OBJECTS.every(object => Math.hypot(p.x - object.x, p.z - object.z) >= object.radius + radius - EPS);
 }
 
 /** Fraction of a straight segment before the first boundary/solid object, without sliding. */
@@ -77,13 +77,13 @@ export function straightFraction(p: Point, d: Point, radius: number): number {
  * Normals point out of the allowed region. Four contacts bound work per tick;
  * any unresolved remainder is discarded rather than allowing penetration.
  */
-export function moveWithCollisions(start: Point, displacement: Point): Point {
-  if (!canStand(start) || !Number.isFinite(displacement.x) || !Number.isFinite(displacement.z)) return { ...start };
+export function moveWithCollisions(start: Point, displacement: Point, radius: number = HERO.radius): Point {
+  if (!canStand(start, radius) || !Number.isFinite(displacement.x) || !Number.isFinite(displacement.z)) return { ...start };
   let p = { ...start }, d = { ...displacement };
   for (let iteration = 0; iteration < 4 && dot(d, d) > EPS * EPS; iteration++) {
-    let hit = boundaryHit(p, d);
+    let hit = boundaryHit(p, d, radius);
     for (const object of SOLID_OBJECTS) {
-      const obstacle = circle(p, d, object, object.radius + HERO.radius);
+      const obstacle = circle(p, d, object, object.radius + radius);
       if (obstacle && obstacle.enter >= -EPS && obstacle.enter < 1 && obstacle.exit > EPS) {
         const t = Math.max(0, obstacle.enter);
         const outward = obstacle.normal(at(p, d, t));
@@ -93,13 +93,13 @@ export function moveWithCollisions(start: Point, displacement: Point): Point {
     }
     if (!hit) {
       const end = at(p, d, 1);
-      return canStand(end) ? end : p;
+      return canStand(end, radius) ? end : p;
     }
     // Back off slightly so tangential travel along curved boundaries can progress.
     const contact = at(p, d, Math.max(0, hit.t - 1e-7 / Math.hypot(d.x, d.z)));
     const inset = { x: contact.x - hit.normal.x * 1e-7, z: contact.z - hit.normal.z * 1e-7 };
-    if (canStand(inset)) p = inset;
-    else if (canStand(contact)) p = contact;
+    if (canStand(inset, radius)) p = inset;
+    else if (canStand(contact, radius)) p = contact;
     else return p;
     d = { x: d.x * (1 - hit.t), z: d.z * (1 - hit.t) };
     const into = Math.max(0, dot(d, hit.normal));

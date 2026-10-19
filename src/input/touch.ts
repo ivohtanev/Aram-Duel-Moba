@@ -26,7 +26,7 @@ export function setupTouch(
   joystick: HTMLElement, knob: HTMLElement, buttons: Record<Action, HTMLElement>, cancel: HTMLElement,
   hero: () => Point, onCast: (aim: Aim) => void, onSuspend: () => void,
   host: Window = window, page: Document = document,
-  target: () => Point | null = () => TARGET.spawn,
+  target: (action: Action) => Point | null = () => TARGET.spawn,
 ) {
   let left: { id: number; x: number; y: number; radius: number } | undefined;
   let right: { id: number; x: number; y: number; action: Action; element: HTMLElement; dragged: boolean } | undefined;
@@ -79,7 +79,7 @@ export function setupTouch(
     if (right.dragged && length > 0) {
       const direction = stick(dx, dy, 1, 0);
       aim = { action: right.action, direction, distance: range(right.action) * Math.min(1, length / 64), canceled };
-    } else aim = { ...quickAim(right.action, hero(), facing, target()), canceled };
+    } else aim = { ...quickAim(right.action, hero(), facing, target(right.action)), canceled };
     cancel.classList.toggle('active', canceled);
   };
   for (const action of Object.keys(buttons) as Action[]) {
@@ -88,7 +88,7 @@ export function setupTouch(
       if (right || event.button !== 0 || left?.id === event.pointerId) return;
       event.preventDefault();
       right = { id: event.pointerId, x: event.clientX, y: event.clientY, action, element, dragged: false };
-      aim = quickAim(action, hero(), facing, target()); cancel.hidden = false; cancel.classList.remove('active');
+      aim = quickAim(action, hero(), facing, target(action)); cancel.hidden = false; cancel.classList.remove('active');
       element.classList.add('active'); element.setPointerCapture(event.pointerId);
     });
     listen(element, 'pointermove', moveRight);
@@ -106,7 +106,7 @@ export function setupTouch(
   return {
     read: () => ({ ...movement }),
     aiming() {
-      if (right && !right.dragged && aim) aim = { ...quickAim(right.action, hero(), facing, target()), canceled: aim.canceled };
+      if (right && !right.dragged && aim) aim = { ...quickAim(right.action, hero(), facing, target(right.action)), canceled: aim.canceled };
       return aim;
     },
     face(input: Point) { const length = Math.hypot(input.x, input.z); if (length > 0) facing = { x: input.x / length, z: input.z / length }; },
