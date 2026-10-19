@@ -18,8 +18,8 @@ export function createMovement() {
   let previous = { ...current };
   let remainder = 0;
   return {
-    reset() { current = { ...HERO.spawn }; previous = { ...current }; remainder = 0; },
-    advance(seconds: number, input: Point, onStep?: (position: Point) => void,
+    reset(position: Point = HERO.spawn) { current = { ...position }; previous = { ...current }; remainder = 0; },
+    advance(seconds: number, input: Point, onStep?: (position: Point) => Point | void,
       move: (position: Point, input: Point) => Point = step) {
       if (!Number.isFinite(seconds) || seconds < 0) return;
       remainder += Math.min(seconds, MAX_FRAME);
@@ -27,7 +27,8 @@ export function createMovement() {
       while (remainder + 1e-12 >= STEP) {
         previous = current;
         current = move(current, input);
-        onStep?.({ ...current });
+        const relocation = onStep?.({ ...current });
+        if (relocation) { current = { ...relocation }; previous = { ...current }; }
         remainder = Math.max(0, remainder - STEP);
       }
     },

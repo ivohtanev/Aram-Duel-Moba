@@ -1,13 +1,13 @@
-import { Mesh } from '@babylonjs/core/Meshes/mesh';
-import { CreateBox } from '@babylonjs/core/Meshes/Builders/boxBuilder';
-import { CreateCylinder } from '@babylonjs/core/Meshes/Builders/cylinderBuilder';
-import { VertexData } from '@babylonjs/core/Meshes/mesh.vertexData';
-import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial';
-import { Color3 } from '@babylonjs/core/Maths/math.color';
-import type { Scene } from '@babylonjs/core/scene';
+import { Mesh } from '@babylonjs/core/Meshes/mesh.js';
+import { CreateBox } from '@babylonjs/core/Meshes/Builders/boxBuilder.js';
+import { CreateCylinder } from '@babylonjs/core/Meshes/Builders/cylinderBuilder.js';
+import { VertexData } from '@babylonjs/core/Meshes/mesh.vertexData.js';
+import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial.js';
+import { Color3 } from '@babylonjs/core/Maths/math.color.js';
+import type { Scene } from '@babylonjs/core/scene.js';
 // Register GLSL before the first merged material is rendered (also during Vite HMR).
-import '@babylonjs/core/Shaders/default.vertex';
-import '@babylonjs/core/Shaders/default.fragment';
+import '@babylonjs/core/Shaders/default.vertex.js';
+import '@babylonjs/core/Shaders/default.fragment.js';
 
 /** Build once, then merge by material: hundreds of props become a few draw calls. */
 export function mapGeometry(scene: Scene) {
@@ -25,6 +25,7 @@ export function mapGeometry(scene: Scene) {
     mesh.position.set(x, y, z);
     mesh.material = mat;
     mesh.isPickable = false;
+    if (!batches.has(mat)) batches.set(mat, []);
     batches.get(mat)!.push(mesh);
     return mesh;
   };
@@ -56,7 +57,7 @@ export function mapGeometry(scene: Scene) {
   const finish = (freeze = true) => {
     const result: Mesh[] = [];
     for (const [mat, meshes] of batches) {
-      if (!meshes.length) { mat.dispose(); continue; }
+      if (!meshes.length) continue; // A material may be shared with a separate building batch.
       const merged = Mesh.MergeMeshes(meshes, true, true, undefined, false, false)!;
       merged.name = `map-${mat.name}`;
       merged.isPickable = false;

@@ -3,6 +3,7 @@ import type { Point } from './movement.ts';
 
 export type Combatant = {
   id: string; team: 'blue' | 'coral'; position: Point;
+  radius?: number;
   health: number; maxHealth: number; generation: number; respawnIn: number;
 };
 export function isValidTarget(source: Combatant, target: Combatant): boolean {
